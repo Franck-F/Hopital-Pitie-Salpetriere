@@ -92,7 +92,6 @@ st.markdown(f"""
         display: flex;
         align-items: center;
         justify-content: space-between;
-        height: 100vh;
         max-height: 100vh;
         gap: 50px;
         padding-top: 0;
@@ -121,38 +120,18 @@ st.markdown(f"""
         background: linear-gradient(to right, #ffffff, {SECONDARY_BLUE});
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 15px;
+        margin-bottom: 8px;
     }}
 
     .wow-sub {{
         font-size: 1.5rem;
         color: #8899A6;
-        margin-bottom: 40px;
+        margin-bottom: 8px;
         line-height: 1.6;
         font-weight: 300;
     }}
 
-    .floating-card {{
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(30px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 40px;
-        padding: 40px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        position: relative;
-        overflow: hidden;
-    }}
-
-    .floating-card::before {{
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: conic-gradient(from 0deg, transparent, {SECONDARY_BLUE}22, transparent);
-        animation: rotate 6s linear infinite;
-    }}
+    
 
     @keyframes rotate {{
         100% {{ transform: rotate(360deg); }}
