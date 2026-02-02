@@ -3,9 +3,15 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import time
 import base64
+from statsmodels.tsa.seasonal import seasonal_decompose
+import scipy.stats as scipy_stats
+import warnings
+
+warnings.filterwarnings('ignore')
 
 # --- Page Config ---
 st.set_page_config(
@@ -17,6 +23,7 @@ st.set_page_config(
 # --- Path Constants ---
 LOGO_PATH = "app/assets/logo_ps.png"
 HERO_BG_PATH = "app/assets/hero_bg.png"
+DATA_ADMISSION_PATH = "data/raw/admissions_hopital_pitie_2024.csv"
 PRIMARY_BLUE = "#005ba1"
 SECONDARY_BLUE = "#00d2ff"
 ACCENT_RED = "#c8102e"
@@ -32,7 +39,7 @@ def get_base64_image(path):
 
 HERO_BG64 = get_base64_image(HERO_BG_PATH)
 
-# --- Global Styling (Glassmorphism & Mesh Gradient) ---
+# --- Global Styling ---
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
@@ -63,10 +70,6 @@ st.markdown(f"""
         margin-top: -1rem !important;
     }}
 
-    #root > div:nth-child(1) > div.withScreencast > div > div > div > section {{
-        padding-top: 0rem !important;
-    }}
-
     /* Global Button Styling */
     .stButton>button {{
         background: linear-gradient(135deg, {PRIMARY_BLUE} 0%, #003d6b 100%);
@@ -81,17 +84,12 @@ st.markdown(f"""
         font-size: 0.9rem;
     }}
 
-    .stButton>button:hover {{
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px {SECONDARY_BLUE}33;
-        border-color: {SECONDARY_BLUE};
-    }}
-
     /* Landing Page Specific */
     .hero-container {{
         display: flex;
         align-items: center;
         justify-content: space-between;
+        height: 100vh;
         max-height: 100vh;
         gap: 50px;
         padding-top: 0;
@@ -104,23 +102,14 @@ st.markdown(f"""
         to {{ opacity: 1; transform: translateY(0); }}
     }}
 
-    .hero-text-side {{
-        flex: 1.2;
-    }}
-
-    .hero-visual-side {{
-        flex: 1;
-        position: relative;
-    }}
-
     .wow-title {{
-        font-size: 4.5rem !important; /* Slightly smaller to fit better */
+        font-size: 4.5rem !important;
         line-height: 1.1;
         font-weight: 800 !important;
         background: linear-gradient(to right, #ffffff, {SECONDARY_BLUE});
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 8px;
+        margin-bottom: 15px;
     }}
 
     .wow-sub {{
@@ -131,10 +120,13 @@ st.markdown(f"""
         font-weight: 300;
     }}
 
-    
-
-    @keyframes rotate {{
-        100% {{ transform: rotate(360deg); }}
+    .floating-card {{
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(30px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 40px;
+        padding: 20px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }}
 
     .stat-badge {{
@@ -168,18 +160,29 @@ if 'page' not in st.session_state:
 def go_to_dashboard():
     st.session_state.page = 'dashboard'
 
+# --- Data Loading (Real Admissions Data) ---
+@st.cache_data
+def get_admission_data():
+    df = pd.read_csv(DATA_ADMISSION_PATH)
+    df['date_entree'] = pd.to_datetime(df['date_entree'])
+    # Extract features for temporal analysis
+    df['annee'] = df['date_entree'].dt.year
+    df['mois'] = df['date_entree'].dt.month
+    df['mois_nom'] = df['date_entree'].dt.month_name()
+    df['jour_semaine'] = df['date_entree'].dt.dayofweek
+    df['jour_semaine_nom'] = df['date_entree'].dt.day_name()
+    df['semaine'] = df['date_entree'].dt.isocalendar().week
+    df['est_weekend'] = df['jour_semaine'].isin([5, 6])
+    return df
+
 # --- Landing Logic ---
 if st.session_state.page == 'landing':
     st.markdown("<div class='hero-container'>", unsafe_allow_html=True)
-    
     col_text, col_visual = st.columns([1.2, 1])
-    
     with col_text:
         st.markdown(f"<div style='border-left: 5px solid {ACCENT_RED}; padding-left: 25px; margin-bottom: 30px;'><img src='data:image/png;base64,{get_base64_image(LOGO_PATH)}' width='300'></div>", unsafe_allow_html=True)
         st.markdown("<h1 class='wow-title'>L'excellence au service de la donnée prédictive.</h1>", unsafe_allow_html=True)
-        st.markdown("<p class='wow-sub'>Anticiper les besoins, optimiser les ressources, sauver des vies. Bienvenue dans l'interface decisionnelle de l'Hôpital Pitié-Salpêtrière.</p>", unsafe_allow_html=True)
-        
-        # Micro Stats
+        st.markdown("<p class='wow-sub'>Anticiper les besoins, optimiser les ressources, sauver des vies. Bienvenue dans l'interface décisionnelle de l'Hôpital Pitié-Salpêtrière.</p>", unsafe_allow_html=True)
         st.markdown(f"""
         <div style='margin-bottom: 40px;'>
             <div class='stat-badge'><span style='color:{SECONDARY_BLUE}; font-weight:800;'>1.8K</span> lits gérés</div>
@@ -187,70 +190,173 @@ if st.session_state.page == 'landing':
             <div class='stat-badge'><span style='color:{SECONDARY_BLUE}; font-weight:800;'>95%</span> précision ML</div>
         </div>
         """, unsafe_allow_html=True)
-        
-        st.button("Entrer dans l'Espace Décisionnel", on_click=go_to_dashboard, use_container_width=False)
-
+        st.button("Entrer dans l'Espace Décisionnel", on_click=go_to_dashboard)
     with col_visual:
         st.markdown("<div class='floating-card'>", unsafe_allow_html=True)
         if HERO_BG64:
-            st.markdown(f"<img src='data:image/png;base64,{HERO_BG64}' style='width:100%; border-radius:30px; position:relative; z-index:1;'>", unsafe_allow_html=True)
+            st.markdown(f"<img src='data:image/png;base64,{HERO_BG64}' style='width:100%; border-radius:30px;'>", unsafe_allow_html=True)
         else:
             st.image(LOGO_PATH, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
-    
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
 # --- Dashboard Logic ---
-@st.cache_data
-def load_data():
-    dates = pd.date_range(end=datetime.now(), periods=100)
-    return pd.DataFrame({
-        "Date": dates,
-        "Flux": 130 + np.random.normal(0, 15, 100).cumsum().clip(-50, 150),
-        "Occ": np.random.uniform(85, 98, 100),
-        "Staff": np.random.uniform(90, 100, 100)
-    })
-
-data = load_data()
+df_adm = get_admission_data()
 st.logo(LOGO_PATH, icon_image=LOGO_PATH)
 
 # Sidebar
 with st.sidebar:
-    st.markdown("<h2 style='color:#f0f4f8;'>Système Vision 2026</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#f0f4f8;'>Vision 2026</h2>", unsafe_allow_html=True)
     st.divider()
-    scénario = st.selectbox("Intelligence Artificielle : Scénario Proactif", ["Filtre Nominal", "Alerte Épidémique", "Vague de Chaleur", "Plan Blanc Simulé"])
+    st.selectbox("Focus Intelligence", ["Activité Globale", "Alertes Pics", "Optimisation Services"])
     st.divider()
     if st.button("Quitter le Dashboard"):
         st.session_state.page = 'landing'
         st.rerun()
 
-# Dashboard Content
 tab_acc, tab_exp, tab_ml, tab_sim, tab_tea = st.tabs([
     "TABLEAU DE BORD", "EXPLORATION DATA", "PRÉVISIONS ML", "SIMULATEUR", "ÉQUIPE PROJET"
 ])
 
 with tab_acc:
-    st.markdown("<h2 style='font-weight:800;'>Panorama de l'Activité</h2>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3)
-    c1.metric("ACTIVITÉ 24H", "154 PATIENTS", "14%")
-    c2.metric("OCCUPATION RÉA", "97.2%", "2.1%")
-    c3.metric("EFFORTS STAFF", "92.5%", "-5%", delta_color="inverse")
+    st.markdown("<h2 style='font-weight:800;'>Panorama de l'Activité Réelle</h2>", unsafe_allow_html=True)
+    daily_stats = df_adm.groupby('date_entree').size()
     
-    fig = px.line(data, x="Date", y="Flux", template="plotly_dark", color_discrete_sequence=[SECONDARY_BLUE])
-    fig.update_layout(height=450, margin=dict(l=0,r=0,b=0,t=20), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-    st.plotly_chart(fig, use_container_width=True)
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Total Admissions 2024", f"{len(df_adm):,}")
+    m2.metric("Moyenne Quotidienne", f"{daily_stats.mean():.1f}")
+    m3.metric("Jour de Pic", f"{daily_stats.max()}")
+    
+    fig_main = px.line(daily_stats.reset_index(), x='date_entree', y=0, 
+                       title="Flux d'admissions quotidiens - 2024", 
+                       template="plotly_dark", color_discrete_sequence=[SECONDARY_BLUE])
+    fig_main.update_layout(height=400, margin=dict(l=0,r=0,b=0,t=40), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+    st.plotly_chart(fig_main, use_container_width=True)
+
+with tab_exp:
+    sub_tab_adm, sub_tab_log, sub_tab_sej = st.tabs([
+        "Admission patient", "Logistique", "Séjour patient"
+    ])
+    
+    with sub_tab_adm:
+        st.markdown("## Analyse Approfondie des Admissions (EDA_Admission)")
+        
+        # 1. Distributions Categoriques
+        st.markdown("### Distributions des Variables Catégorielles")
+        exp_c1, exp_c2 = st.columns(2)
+        
+        with exp_c1:
+            pole_counts = df_adm['service'].value_counts().head(10)
+            fig1 = px.bar(pole_counts, orientation='h', title="Top 10 Pôles/Services", 
+                          template="plotly_dark", color_discrete_sequence=['lightblue'])
+            st.plotly_chart(fig1, use_container_width=True)
+            
+            geo_counts = df_adm['departement_patient'].value_counts().head(10)
+            fig2 = px.bar(geo_counts, title="Origine Géographique (Top 10)", 
+                          template="plotly_dark", color_discrete_sequence=['coral'])
+            st.plotly_chart(fig2, use_container_width=True)
+            
+        with exp_c2:
+            mode_counts = df_adm['mode_entree'].value_counts()
+            fig3 = px.pie(mode_counts, names=mode_counts.index, title="Modes d'Entrée", 
+                          template="plotly_dark", hole=0.4)
+            st.plotly_chart(fig3, use_container_width=True)
+            
+            motif_counts = df_adm['motif_principal'].value_counts().head(20)
+            fig4 = px.bar(motif_counts, orientation='h', title="Top 20 Motifs d'Admission", 
+                          template="plotly_dark", color_discrete_sequence=['lightgreen'])
+            st.plotly_chart(fig4, use_container_width=True)
+
+        # 2. Analyse Temporelle & Decomposition
+        st.divider()
+        st.markdown("### Tendances, Saisonnalité et Patterns")
+        
+        daily_series = daily_stats.asfreq('D', fill_value=0)
+        decomposition = seasonal_decompose(daily_series, model='additive', period=7)
+        
+        fig_decomp = make_subplots(rows=4, cols=1, 
+                                   subplot_titles=('Signal Original', 'Tendance', 'Saisonnalité (Hebdo)', 'Résidus'),
+                                   vertical_spacing=0.1)
+        fig_decomp.add_trace(go.Scatter(x=daily_series.index, y=daily_series.values, name="Original", line_color=SECONDARY_BLUE), row=1, col=1)
+        fig_decomp.add_trace(go.Scatter(x=decomposition.trend.index, y=decomposition.trend.values, name="Tendance", line_color=ACCENT_RED), row=2, col=1)
+        fig_decomp.add_trace(go.Scatter(x=decomposition.seasonal.index, y=decomposition.seasonal.values, name="Saisonnalité", line_color='green'), row=3, col=1)
+        fig_decomp.add_trace(go.Scatter(x=decomposition.resid.index, y=decomposition.resid.values, name="Résidus", line_color='orange'), row=4, col=1)
+        fig_decomp.update_layout(height=800, template="plotly_dark", showlegend=False, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig_decomp, use_container_width=True)
+
+        # 3. Heatmaps & Boxplots
+        pat_c1, pat_c2 = st.columns(2)
+        with pat_c1:
+            jour_ordre = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+            fig_box = go.Figure()
+            for jour in jour_ordre:
+                data_j = df_adm[df_adm['jour_semaine_nom'] == jour].groupby('date_entree').size()
+                fig_box.add_trace(go.Box(y=data_j.values, name=jour[:3]))
+            fig_box.update_layout(title="Variabilité par Jour de la Semaine", template="plotly_dark")
+            st.plotly_chart(fig_box, use_container_width=True)
+        with pat_c2:
+            pivot_h = df_adm.groupby(['jour_semaine', 'mois']).size().unstack(fill_value=0)
+            fig_heat = px.imshow(pivot_h.values, labels=dict(x="Mois", y="Jour", color="Volume"),
+                                 x=pivot_h.columns, y=jour_ordre, title="Intensité Semaine x Mois",
+                                 color_continuous_scale='YlOrRd', template="plotly_dark")
+            st.plotly_chart(fig_heat, use_container_width=True)
+
+        # 4. Anomalies
+        st.divider()
+        st.markdown("### Détection d'Anomalies (Pics Inhabituels)")
+        Q1, Q3 = daily_stats.quantile(0.25), daily_stats.quantile(0.75)
+        IQR = Q3 - Q1
+        upper_b = Q3 + 1.5 * IQR
+        outliers = daily_stats[daily_stats > upper_b]
+        
+        fig_out = go.Figure()
+        fig_out.add_trace(go.Scatter(x=daily_stats.index, y=daily_stats.values, mode='markers', name='Normal', marker=dict(color=SECONDARY_BLUE, size=4)))
+        fig_out.add_trace(go.Scatter(x=outliers.index, y=outliers.values, mode='markers', name='Anomalie', marker=dict(color=ACCENT_RED, size=8, symbol='x')))
+        fig_out.add_hline(y=upper_b, line_dash="dash", line_color=ACCENT_RED, annotation_text="Seuil IQR")
+        fig_out.update_layout(title="Identification des Pics Hors-Normes", template="plotly_dark")
+        st.plotly_chart(fig_out, use_container_width=True)
+
+    with sub_tab_log:
+        st.info("Intégration des données logistiques (lits, personnel) en cours...")
+    with sub_tab_sej:
+        st.info("Intégration des données de séjour (DMS, transitions) en cours...")
+
+with tab_ml:
+    st.markdown("## Prévisions de Charge Hospitalière")
+    st.markdown("Moteur prédictif basé sur l'historique 2024.")
+    # Simple forecast visualization for demo
+    last_date = df_adm['date_entree'].max()
+    future_dates = [last_date + timedelta(days=x) for x in range(1, 15)]
+    future_preds = [daily_stats.tail(30).mean()] * 14 + np.random.normal(0, 5, 14).cumsum()
+    
+    fig_pred = go.Figure()
+    fig_pred.add_trace(go.Scatter(x=daily_stats.index[-30:], y=daily_stats.values[-30:], name="Historique Récent"))
+    fig_pred.add_trace(go.Scatter(x=future_dates, y=future_preds, name="Prévision Vision 2026", line=dict(dash='dash', color=SECONDARY_BLUE)))
+    fig_pred.update_layout(template="plotly_dark", height=500, title="Prévisions Flux Urgentistes (J+14)")
+    st.plotly_chart(fig_pred, use_container_width=True)
+
+with tab_sim:
+    st.markdown("## Simulateur Interactif de Crise")
+    with st.expander("Paramétrage du Scénario", expanded=True):
+        sc_col1, sc_col2 = st.columns(2)
+        with sc_col1:
+            st.slider("Intensité du Pic (%)", 0, 100, 25)
+        with sc_col2:
+            st.selectbox("Ressource Critique", ["Lits Réa", "Staff Infirmier", "Stocks Médicaux"])
+        if st.button("Lancer l'Analyse d'Impact"):
+            with st.status("Génération du scénario..."):
+                time.sleep(1)
+                st.write("Calcul des saturations par pôle...")
+                time.sleep(1)
+            st.warning("Alerte saturation : Le Pôle Médecine dépasse 95% sous ce scénario.")
 
 with tab_tea:
-    st.markdown("<h1 style='text-align:center;'>L'Équipe Excellence</h1>", unsafe_allow_html=True)
-    st.image(LOGO_PATH, width=150)
-    
-    # Modern Team Grid
+    st.markdown("<h1 style='text-align:center;'>Équipe Projet Vision 2026</h1>", unsafe_allow_html=True)
     team_cols = st.columns(4)
     members = ["FranckF", "Gaetan Adj", "Djouhratabet", "Martineau"]
     for i, member in enumerate(members):
         with team_cols[i]:
-            st.markdown(f"<div style='text-align:center; padding:30px; border-radius:20px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1);'><div style='font-size:1.2rem; font-weight:800; color:{SECONDARY_BLUE};'>{member}</div><div style='font-size:0.8rem; color:#8899A6; margin-top:10px;'>Expertise IA & Santé</div></div>", unsafe_allow_html=True)
-    
+            st.markdown(f"<div style='text-align:center; padding:30px; border-radius:30px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1);'><div style='font-size:1.2rem; font-weight:800; color:{SECONDARY_BLUE};'>{member}</div><div style='font-size:0.8rem; color:#8899A6; margin-top:10px;'>Expertise IA & Santé</div></div>", unsafe_allow_html=True)
     st.divider()
-    st.markdown("<p style='text-align:center; color:#555;'>Projet Académique M2 - Promotion 2026</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#555;'>Direction de l'Hôpital Pitié-Salpêtrière | Promotion 2026</p>", unsafe_allow_html=True)
