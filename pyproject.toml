@@ -5,10 +5,10 @@ description = "Système de prévision et de gestion des ressources pour l'Hôpit
 readme = "README.md"
 requires-python = ">=3.13"
 authors = [
-    { name = "FranckF", email = "franck@example.com" },
-    { name = "Koffi Gaëtan", email = "koffi@example.com" },
-    { name = "Djouhratabet", email = "djouhratabet@example.com" },
-    { name = "Christian Martineau", email = "christian@example.com" },
+    { name = "Franck", email = "franck-dilane1.fambou@epitech.digital" },
+    { name = "Koffi Gaëtan", email = "koffi.adjai@epitech.digital" },
+    { name = "Djouhra", email = "djouhra.ould-younes@epitech.digital" },
+    { name = "Chalotte", email = "charlotteMartineau@epitech.digital" },
 ]
 license = { text = "MIT" }
 keywords = ["healthcare", "hospital", "prediction", "machine-learning", "data-analysis"]

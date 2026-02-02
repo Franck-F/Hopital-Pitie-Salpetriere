@@ -1,0 +1,96 @@
+Metadata-Version: 2.4
+Name: hopital-pitie-salpetriere
+Version: 0.1.0
+Summary: Système de prévision et de gestion des ressources pour l'Hôpital Pitié-Salpêtrière
+Author-email: Franck <franck-dilane1.fambou@epitech.digital>, Koffi Gaëtan <koffi.adjai@epitech.digital>, Djouhra <djouhra.ould-younes@epitech.digital>, Chalotte <charlotteMartineau@epitech.digital>
+License: MIT
+Project-URL: Homepage, https://github.com/FranckF/hopital-pitie-salpetriere
+Project-URL: Repository, https://github.com/FranckF/hopital-pitie-salpetriere
+Project-URL: Documentation, https://github.com/FranckF/hopital-pitie-salpetriere/blob/main/README.md
+Keywords: healthcare,hospital,prediction,machine-learning,data-analysis
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Healthcare Industry
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.13
+Description-Content-Type: text/markdown
+Requires-Dist: faker>=40.1.2
+Requires-Dist: numpy>=2.4.2
+Requires-Dist: pandas>=2.3.3
+Requires-Dist: plotly>=6.5.2
+Requires-Dist: pytest>=9.0.2
+Requires-Dist: scikit-learn>=1.8.0
+Requires-Dist: statsmodels>=0.14.6
+Requires-Dist: streamlit>=1.53.1
+Requires-Dist: xgboost>=3.1.3
+Requires-Dist: joblib>=1.3.0
+Provides-Extra: dev
+Requires-Dist: pytest>=9.0.2; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: black>=24.0.0; extra == "dev"
+Requires-Dist: flake8>=7.0.0; extra == "dev"
+Requires-Dist: mypy>=1.8.0; extra == "dev"
+Provides-Extra: ml
+Requires-Dist: prophet>=1.3.0; extra == "ml"
+Requires-Dist: lightgbm>=4.0.0; extra == "ml"
+
+# Hôpital Pitié-Salpêtrière : Système de Prévision et de Gestion des Ressources
+
+![Python Version](https://img.shields.io/badge/python-3.13+-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![uv](https://img.shields.io/badge/managed%20by-uv-purple.svg)
+![Status](https://img.shields.io/badge/status-in--development-yellow.svg)
+
+## Overview
+
+Ce projet vise à développer un système de prévision et de gestion des ressources pour l'Hôpital Pitié-Salpêtrière. Il permet d'anticiper les pics d'activité, d'optimiser l'allocation des lits et du personnel, et de fournir un tableau de bord interactif pour les décideurs hospitaliers.
+
+## Objectifs
+
+- Générer un jeu de données réaliste basé sur l'activité hospitalière.
+- Analyser les tendances d'admissions et identifier les périodes critiques.
+- Développer un modèle prédictif (Machine Learning) pour anticiper les flux.
+- Créer un prototype MVP avec un tableau de bord interactif (Streamlit/Plotly).
+
+## Stack Technique
+
+- **Gestion des dépendances** : `uv`
+- **Langage** : Python 3.13+
+- **Analyse de données** : `pandas`, `numpy`, `scipy`
+- **Visualisation** : `plotly`, `matplotlib`, `seaborn`
+- **Machine Learning** : `scikit-learn`, `xgboost`, `prophet`, `statsmodels`
+- **Application Web** : `streamlit`
+- **Tests** : `pytest`
+
+## Structure du Projet
+
+- `data/` : Jeux de données bruts et transformés.
+- `notebooks/` : Analyses exploratoires et développement des modèles.
+- `src/` : Code source pour la génération de données et le processing.
+- `app/` : Application Streamlit (MVP).
+- `reports/` : Rapports de conception, d'analyse et stratégiques.
+- `tests/` : Tests unitaires.
+
+## Installation
+
+Assurez-vous d'avoir `uv` installé.
+
+```bash
+uv sync
+```
+
+## Utilisation
+
+Pour lancer l'application Streamlit :
+
+```bash
+uv run streamlit run app/main.py
+```
+
+## Auteurs
+
+- [@FranckF](https://github.com/FranckF)
+- [@koffigaetan-adj](https://github.com/koffigaetan-adj)
+- [@Djouhratabet](https://github.com/Djouhratabet)
+- [@cmartineau15](https://github.com/cmartineau15)
