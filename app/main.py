@@ -48,20 +48,23 @@ st.markdown(f"""
         background-attachment: fixed;
     }}
 
-    /* Remove Streamlit default spacing aggressively */
-    header[data-testid="stHeader"] {{
+    /* Radical Streamlit UI Cleaning */
+    header[data-testid="stHeader"], [data-testid="stDecoration"] {{
         display: none !important;
         height: 0px !important;
     }}
     
-    [data-testid="stAppViewContainer"] > .main {{
+    [data-testid="stAppViewContainer"] {{
         padding-top: 0rem !important;
-        margin-top: -3rem !important; /* Pull up to counteract hidden header shadow/space */
     }}
 
-    .block-container {{
+    .main .block-container {{
         padding-top: 0rem !important;
-        padding-bottom: 0rem !important;
+        margin-top: -1rem !important;
+    }}
+
+    #root > div:nth-child(1) > div.withScreencast > div > div > div > section {{
+        padding-top: 0rem !important;
     }}
 
     /* Global Button Styling */
