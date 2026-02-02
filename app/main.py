@@ -48,11 +48,17 @@ st.markdown(f"""
         background-attachment: fixed;
     }}
 
-    /* Remove Streamlit default spacing */
+    /* Remove Streamlit default spacing aggressively */
     header[data-testid="stHeader"] {{
         display: none !important;
+        height: 0px !important;
     }}
     
+    [data-testid="stAppViewContainer"] > .main {{
+        padding-top: 0rem !important;
+        margin-top: -3rem !important; /* Pull up to counteract hidden header shadow/space */
+    }}
+
     .block-container {{
         padding-top: 0rem !important;
         padding-bottom: 0rem !important;
