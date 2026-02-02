@@ -45,8 +45,15 @@ uv sync
 
 ## Utilisation
 
-Pour lancer l'application Streamlit (une fois développée) :
+Pour lancer l'application Streamlit :
 
 ```bash
 uv run streamlit run app/main.py
 ```
+
+## Auteurs
+
+- [@FranckF](https://github.com/FranckF)
+- [@koffigaetan-adj](https://github.com/koffigaetan-adj)
+- [@Djouhratabet](https://github.com/Djouhratabet)
+- [@cmartineau15](https://github.com/cmartineau15)
