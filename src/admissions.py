@@ -152,5 +152,5 @@ if __name__ == "__main__":
     
     df = generate_complete_dataset_2024()
     df.to_csv(output_file, index=False)
-    print(f"✅ Fichier généré : {output_file}")
-    print(f"📊 Nombre de lignes : {len(df):,}")
+    print(f"Fichier généré : {output_file}")
+    print(f"Nombre de lignes : {len(df):,}")
