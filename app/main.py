@@ -1,249 +1,223 @@
-"""Application Streamlit - Tableau de bord hospitalier."""
-
 import streamlit as st
 import pandas as pd
-import sys
-from pathlib import Path
+import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime, timedelta
 
-# Ajouter le répertoire src au path
-sys.path.append(str(Path(__file__).parent.parent))
-
-from src.data_generator import HospitalDataGenerator
-from src.analyzer import HospitalAnalyzer
-from src.predictor import AdmissionPredictor
-
-
-# Configuration de la page
+# --- Page Config ---
 st.set_page_config(
-    page_title="Tableau de bord - Hôpital Pitié-Salpêtrière",
+    page_title="Pitié-Salpêtrière | Resource Management",
     page_icon="🏥",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
+# --- Custom Styling (Glassmorphism & Premium UI) ---
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+        color: #E0E0E0;
+    }
+
+    .stApp {
+        background: radial-gradient(circle at top right, #1a2a47, #0d1117);
+    }
+
+    /* Glassmorphism Containers */
+    div.stMetric, div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column"] > div {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    /* Sidebar Styling */
+    section[data-testid="stSidebar"] {
+        background: rgba(13, 17, 23, 0.8);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Headers */
+    h1, h2, h3 {
+        font-weight: 700 !important;
+        letter-spacing: -0.5px;
+    }
+
+    .main-title {
+        background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 3rem !important;
+        margin-bottom: 0px;
+    }
+
+    /* KPI Metric Adjustments */
+    [data-testid="stMetricValue"] {
+        font-size: 2.2rem !important;
+        font-weight: 700 !important;
+        color: #00d2ff !important;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        font-size: 0.9rem !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #8899A6 !important;
+    }
+
+    /* Hide redundant elements */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
+
+# --- Data Simulation ---
 @st.cache_data
-def load_or_generate_data():
-    """Charge ou génère les données."""
-    try:
-        admissions = pd.read_csv('data/raw/admissions.csv')
-        resources = pd.read_csv('data/raw/resources.csv')
-    except FileNotFoundError:
-        st.warning("Génération des données... Cela peut prendre quelques secondes.")
-        generator = HospitalDataGenerator()
-        admissions = generator.generate_admissions()
-        resources = generator.generate_resources()
+def generate_mock_data(days=30, scenario="Normal"):
+    dates = [datetime.now() - timedelta(days=x) for x in range(days)]
+    dates.reverse()
+    
+    base_admissions = 120
+    noise = np.random.normal(0, 15, days)
+    
+    if scenario == "Epidémie (Grippe/Covid)":
+        trend = np.linspace(0, 80, days)
+    elif scenario == "Canicule":
+        trend = np.linspace(0, 40, days)
+    else:
+        trend = np.zeros(days)
         
-        # Sauvegarde
-        admissions.to_csv('data/raw/admissions.csv', index=False)
-        resources.to_csv('data/raw/resources.csv', index=False)
+    admissions = base_admissions + trend + noise
     
-    return admissions, resources
+    df = pd.DataFrame({
+        "Date": dates,
+        "Admissions": admissions.astype(int),
+        "Occupation_Lits": np.random.uniform(75, 95, days),
+        "Staff_Available": np.random.uniform(85, 100, days)
+    })
+    return df
 
+# --- Sidebar ---
+st.sidebar.markdown("<h2 style='color: #00d2ff;'>Configuration</h2>", unsafe_allow_html=True)
+selected_scenario = st.sidebar.selectbox(
+    "Scénario de Simulation",
+    ["Normal", "Epidémie (Grippe/Covid)", "Canicule", "Grève du Personnel"]
+)
 
-def main():
-    """Application principale."""
-    
-    # En-tête
-    st.title("🏥 Hôpital Pitié-Salpêtrière")
-    st.markdown("### Système de Prévision et de Gestion des Ressources")
-    st.markdown("---")
-    
-    # Chargement des données
-    with st.spinner("Chargement des données..."):
-        admissions, resources = load_or_generate_data()
-    
-    # Sidebar
-    st.sidebar.header("Navigation")
-    page = st.sidebar.radio(
-        "Sélectionner une page",
-        ["Vue d'ensemble", "Analyse des admissions", "Prédictions", "Ressources"]
+st.sidebar.divider()
+st.sidebar.markdown("### Ressources Critiques")
+st.sidebar.slider("Capacité active des lits", 500, 2000, 1800)
+st.sidebar.slider("Effectifs cibles", 50, 500, 250)
+
+st.sidebar.divider()
+st.sidebar.info("Dashboard Decisionnel v1.0.0 Alpha - Direction Pitié-Salpêtrière")
+
+# --- Header Section ---
+st.markdown("<h1 class='main-title'>Pitié-Salpêtrière</h1>", unsafe_allow_html=True)
+st.markdown("<p style='font-size: 1.2rem; color: #8899A6; margin-top: -10px;'>Système Global de Prévision et de Gestion des Flux</p>", unsafe_allow_html=True)
+
+# --- Data Processing ---
+data = generate_mock_data(scenario=selected_scenario)
+latest = data.iloc[-1]
+prev = data.iloc[-2]
+
+# --- KPI Row ---
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.metric("Admissions (24h)", f"{latest['Admissions']}", delta=f"{int(latest['Admissions'] - prev['Admissions'])}")
+with col2:
+    st.metric("Occupation Lits", f"{latest['Occupation_Lits']:.1f}%", delta=f"{latest['Occupation_Lits'] - prev['Occupation_Lits']:.1f}%")
+with col3:
+    st.metric("Personnel Actif", f"{latest['Staff_Available']:.1f}%", delta=f"{latest['Staff_Available'] - prev['Staff_Available']:.1f}%", delta_color="inverse")
+with col4:
+    alert_level = "CRITIQUE" if latest['Occupation_Lits'] > 90 else "NOMINAL"
+    st.metric("État du Système", alert_level)
+
+st.divider()
+
+# --- Main Charts ---
+c1, c2 = st.columns([2, 1])
+
+with c1:
+    st.markdown("### Évolution des Admissions et Prévisions")
+    fig_line = px.line(data, x="Date", y="Admissions", template="plotly_dark")
+    fig_line.update_traces(line_color='#00d2ff', line_width=3, fill='tozeroy', fillcolor='rgba(0, 210, 255, 0.1)')
+    fig_line.update_layout(
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        xaxis=dict(showgrid=False),
+        yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+        height=400,
+        margin=dict(l=0, r=0, b=0, t=0)
     )
-    
-    # Initialisation de l'analyseur
-    analyzer = HospitalAnalyzer(admissions)
-    
-    if page == "Vue d'ensemble":
-        show_overview(analyzer, admissions, resources)
-    
-    elif page == "Analyse des admissions":
-        show_admissions_analysis(analyzer)
-    
-    elif page == "Prédictions":
-        show_predictions(admissions)
-    
-    elif page == "Ressources":
-        show_resources(resources)
+    st.plotly_chart(fig_line, use_container_width=True)
 
-
-def show_overview(analyzer, admissions, resources):
-    """Affiche la vue d'ensemble."""
-    st.header("📊 Vue d'ensemble")
-    
-    # Statistiques principales
-    stats = analyzer.get_summary_statistics()
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric(
-            "Total admissions",
-            f"{stats['total_admissions']:,}",
-            help="Nombre total d'admissions sur la période"
-        )
-    
-    with col2:
-        st.metric(
-            "Durée moyenne de séjour",
-            f"{stats['duree_sejour_moyenne']:.1f} jours",
-            help="Durée moyenne d'hospitalisation"
-        )
-    
-    with col3:
-        st.metric(
-            "Taux d'urgences",
-            f"{stats['taux_urgences']:.1f}%",
-            help="Pourcentage d'admissions en urgence"
-        )
-    
-    with col4:
-        st.metric(
-            "Âge moyen",
-            f"{stats['age_moyen']:.0f} ans",
-            help="Âge moyen des patients"
-        )
-    
-    st.markdown("---")
-    
-    # Graphiques
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("Évolution des admissions")
-        fig_time = analyzer.plot_admissions_over_time()
-        st.plotly_chart(fig_time, use_container_width=True)
-    
-    with col2:
-        st.subheader("Répartition par service")
-        fig_service = analyzer.plot_service_distribution()
-        st.plotly_chart(fig_service, use_container_width=True)
-    
-    # Périodes de pic
-    st.markdown("---")
-    st.subheader("🔴 Périodes de pic d'activité")
-    peaks = analyzer.identify_peak_periods(threshold_percentile=90)
-    st.dataframe(
-        peaks[['date_admission', 'nb_admissions', 'nb_urgences']].head(10),
-        use_container_width=True
+with c2:
+    st.markdown("### Répartition par Service")
+    services = pd.DataFrame({
+        "Service": ["Urgences", "Réanimation", "Chirurgie", "Médecine Interne", "Pédiatrie"],
+        "Flux": [45, 15, 20, 12, 8]
+    })
+    fig_donut = px.pie(services, values='Flux', names='Service', hole=0.7, 
+                       color_discrete_sequence=['#00d2ff', '#3a7bd5', '#1a2a47', '#00bfa5', '#607d8b'])
+    fig_donut.update_layout(
+        showlegend=False,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=350,
+        margin=dict(l=0, r=0, b=0, t=0)
     )
+    # Add center text
+    fig_donut.add_annotation(text="Total Flux", showarrow=False, font_size=14, font_color="#8899A6")
+    st.plotly_chart(fig_donut, use_container_width=True)
 
+# --- Lower Section ---
+st.markdown("### Analyse de Capacité Sectorielle")
+c3, c4 = st.columns(2)
 
-def show_admissions_analysis(analyzer):
-    """Affiche l'analyse détaillée des admissions."""
-    st.header("📈 Analyse des admissions")
+with c3:
+    # Heatmap of occupancy by hour/day
+    st.markdown("#### Intensité d'Occupation (Dernière Semaine)")
+    days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+    hours = [f'{h}h' for h in range(0, 24, 4)]
+    z_data = np.random.uniform(60, 100, (len(days), len(hours)))
     
-    # Statistiques par service
-    st.subheader("Statistiques par service")
-    service_stats = analyzer.get_service_stats()
-    st.dataframe(service_stats, use_container_width=True)
-    
-    # Statistiques quotidiennes
-    st.markdown("---")
-    st.subheader("Statistiques quotidiennes")
-    daily_stats = analyzer.get_daily_stats()
-    st.dataframe(daily_stats.tail(30), use_container_width=True)
+    fig_hm = go.Figure(data=go.Heatmap(
+        z=z_data, x=hours, y=days,
+        colorscale=[[0, '#1a2a47'], [0.5, '#3a7bd5'], [1, '#00d2ff']],
+        showscale=False
+    ))
+    fig_hm.update_layout(
+        height=300, 
+        margin=dict(l=0, r=0, b=0, t=0),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font_color="#8899A6"
+    )
+    st.plotly_chart(fig_hm, use_container_width=True)
 
+with c4:
+    st.markdown("#### Recommandations de Déploiement")
+    st.markdown(f"""
+    <div style='background: rgba(0, 210, 255, 0.05); border-left: 5px solid #00d2ff; padding: 20px; border-radius: 5px;'>
+        <p style='color: #00d2ff; font-weight: 600; margin-bottom: 10px;'>Protocoles Suggérés (Scénario : {selected_scenario})</p>
+        <ul style='color: #E0E0E0; font-size: 0.95rem;'>
+            <li>Activer la réserve sanitaire (Seuil {'>'} 85% atteint)</li>
+            <li>Prioriser les sorties en Médecine Interne pour libérer 15 lits</li>
+            <li>Renforcer les gardes de nuit aux Urgences (+2 IDE)</li>
+            <li>Déporter les chirurgies non-urgentes de 24h</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
 
-def show_predictions(admissions):
-    """Affiche les prédictions."""
-    st.header("🔮 Prédictions")
-    
-    # Configuration
-    col1, col2 = st.columns([1, 3])
-    
-    with col1:
-        model_type = st.selectbox(
-            "Type de modèle",
-            ["random_forest", "gradient_boosting"],
-            format_func=lambda x: "Random Forest" if x == "random_forest" else "Gradient Boosting"
-        )
-        
-        n_days = st.slider("Nombre de jours à prédire", 7, 90, 30)
-        
-        train_button = st.button("Entraîner et prédire", type="primary")
-    
-    with col2:
-        if train_button:
-            with st.spinner("Entraînement du modèle..."):
-                predictor = AdmissionPredictor(model_type=model_type)
-                metrics = predictor.train(admissions)
-                
-                # Affichage des métriques
-                st.success("Modèle entraîné avec succès!")
-                met_col1, met_col2, met_col3 = st.columns(3)
-                with met_col1:
-                    st.metric("MAE", f"{metrics['mae']:.2f}")
-                with met_col2:
-                    st.metric("RMSE", f"{metrics['rmse']:.2f}")
-                with met_col3:
-                    st.metric("R²", f"{metrics['r2']:.3f}")
-            
-            # Prédictions
-            future_dates = pd.date_range(
-                start=pd.to_datetime(admissions['date_admission']).max() + pd.Timedelta(days=1),
-                periods=n_days,
-                freq='D'
-            )
-            
-            predictions = predictor.predict(future_dates)
-            
-            # Affichage des prédictions
-            st.markdown("---")
-            st.subheader("Prédictions futures")
-            
-            pred_df = pd.DataFrame({
-                'Date': future_dates,
-                'Admissions prévues': predictions.round().astype(int)
-            })
-            
-            st.line_chart(pred_df.set_index('Date'))
-            st.dataframe(pred_df, use_container_width=True)
-
-
-def show_resources(resources):
-    """Affiche les ressources."""
-    st.header("🏥 Gestion des ressources")
-    
-    resources['date'] = pd.to_datetime(resources['date'])
-    
-    # Métriques actuelles (dernier jour)
-    latest = resources.iloc[-1]
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("Lits disponibles", int(latest['lits_disponibles']))
-    
-    with col2:
-        st.metric("Infirmiers", int(latest['infirmiers']))
-    
-    with col3:
-        st.metric("Médecins", int(latest['medecins']))
-    
-    with col4:
-        st.metric("Taux d'occupation", f"{latest['taux_occupation']:.1%}")
-    
-    # Graphiques
-    st.markdown("---")
-    st.subheader("Évolution des ressources")
-    
-    # Graphique du taux d'occupation
-    st.line_chart(resources.set_index('date')['taux_occupation'])
-    
-    # Tableau des dernières données
-    st.subheader("Données récentes")
-    st.dataframe(resources.tail(30), use_container_width=True)
-
-
-if __name__ == "__main__":
-    main()
+# --- Footer ---
+st.divider()
+st.markdown("<p style='text-align: center; color: #8899A6; font-size: 0.8rem;'>© 2026 Pitié-Salpêtrière | Division Data & Prospective</p>", unsafe_allow_html=True)
