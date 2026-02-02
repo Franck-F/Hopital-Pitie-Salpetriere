@@ -2,6 +2,7 @@ README.md
 pyproject.toml
 src/__init__.py
 src/admissions.py
+src/diag_patient_sejour.py
 src/hopital_pitie_salpetriere.egg-info/PKG-INFO
 src/hopital_pitie_salpetriere.egg-info/SOURCES.txt
 src/hopital_pitie_salpetriere.egg-info/dependency_links.txt
