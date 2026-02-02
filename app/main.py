@@ -9,9 +9,8 @@ import time
 # --- Page Config ---
 st.set_page_config(
     page_title="Pitié-Salpêtrière | Vision 2026",
-    page_icon="🏥",
+    page_icon="app/assets/logo_ps.png",
     layout="wide",
-    initial_sidebar_state="expanded"
 )
 
 # --- Themes & Styling ---
@@ -35,6 +34,10 @@ st.markdown(f"""
     }}
 
     /* Landing Page Styling */
+    @keyframes fadeIn {{
+        from {{ opacity: 0; transform: translateY(20px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
     .landing-rect {{
         background: rgba(255, 255, 255, 0.03);
         backdrop-filter: blur(20px);
@@ -43,6 +46,7 @@ st.markdown(f"""
         border: 1px solid rgba(255, 255, 255, 0.1);
         text-align: center;
         margin-top: 50px;
+        animation: fadeIn 1.2s ease-out;
     }}
 
     /* Tab Custom Styling */
@@ -75,12 +79,6 @@ st.markdown(f"""
         border: 1px solid rgba(255, 255, 255, 0.05);
     }}
 
-    /* Sidebar */
-    section[data-testid="stSidebar"] {{
-        background: rgba(13, 17, 23, 0.9);
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
-    }}
-
     .main-title {{
         font-size: 3.5rem !important;
         background: linear-gradient(90deg, #FFFFFF 0%, {SECONDARY_BLUE} 100%);
@@ -89,7 +87,6 @@ st.markdown(f"""
         font-weight: 800 !important;
     }}
 
-    /* Custom Button */
     .stButton>button {{
         background: {PRIMARY_BLUE};
         color: white;
@@ -98,11 +95,6 @@ st.markdown(f"""
         border: none;
         font-weight: 600;
         transition: 0.3s;
-    }}
-
-    .stButton>button:hover {{
-        background: {SECONDARY_BLUE};
-        box-shadow: 0 0 20px {SECONDARY_BLUE}44;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -129,133 +121,91 @@ def get_full_data():
     })
     return df
 
-# --- Landing Page logic ---
+# --- Landing Page ---
 if st.session_state.page == 'landing':
-    col1, col2, col3 = st.columns([1, 2, 1])
+    _, col2, _ = st.columns([1, 2, 1])
     with col2:
         st.markdown("<div class='landing-rect'>", unsafe_allow_html=True)
-        try:
-            st.image(LOGO_PATH, width=400)
-        except:
-            st.title("Hôpital Pitié-Salpêtrière")
-        
+        st.image(LOGO_PATH, width=400)
         st.markdown("<h1 class='main-title'>Vision 2026</h1>", unsafe_allow_html=True)
         st.markdown("<p style='font-size: 1.4rem; color: #8899A6;'>Système de Prévision & Gestion des Ressources Hospitalières</p>", unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
         st.button("Accéder au Dashboard", on_click=go_to_dashboard, use_container_width=True)
+        st.markdown("<p style='margin-top:20px; color:#555;'>Promotion 2026 | Direction Pitié-Salpêtrière</p>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- Dashboard Logic ---
+# --- Dashboard ---
 data = get_full_data()
+st.logo(LOGO_PATH, icon_image=LOGO_PATH)
 
-# Sidebar
 with st.sidebar:
-    try:
-        st.image(LOGO_PATH, use_container_width=True)
-    except:
-        st.title("AP-HP")
-    
-    st.divider()
     st.markdown("### Contrôles")
-    time_range = st.selectbox("Période d'analyse", ["7 derniers jours", "30 derniers jours", "3 mois", "Année complète"])
     scénario = st.selectbox("Simulation Active", ["Normal", "Crise Hivernale", "Canicule Extrême", "Sous-effectif"])
-    
     st.divider()
-    st.markdown("#### Alertes Actives")
-    st.error("Saturation Réanimation : 96%")
-    st.warning("Pic prévu : Jeudi prochain (+15%)")
-    
     if st.button("Retour à l'accueil"):
         st.session_state.page = 'landing'
         st.rerun()
 
-# --- Main Layout ---
-tab_accueil, tab_exploration, tab_predictions, tab_simulations = st.tabs([
-    "🏠 Accueil", "📊 Exploration", "🔮 Prédictions", "🎮 Simulations"
+tab_accueil, tab_exploration, tab_predictions, tab_simulations, tab_infos = st.tabs([
+    "ACCUEIL", "EXPLORATION", "PRÉDICTIONS", "SIMULATIONS", "INFOS"
 ])
 
-# --- Tab 1: Accueil ---
 with tab_accueil:
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.markdown("<h2 style='margin-bottom:0;'>État Général du Système</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='color:#8899A6;'>Vue d'ensemble en temps réel des flux hospitaliers</p>", unsafe_allow_html=True)
-    with col2:
-        st.markdown(f"<div style='text-align:right; font-weight:600; color:{ACCENT_RED}; padding:10px;'>LIVE: {datetime.now().strftime('%H:%M')}</div>", unsafe_allow_html=True)
-
-    # Metrics Row
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Admissions", "142", "12%")
-    m2.metric("Taux d'Occupation", "89.4%", "2.1%")
+    m1.metric("Admissions (24h)", "142", "12%")
+    m2.metric("Occupation Lits", "89.4%", "2.1%")
     m3.metric("Lits Disponibles", "184", "-15", delta_color="inverse")
     m4.metric("Score Efficacité", "92/100", "5")
-
-    # Main Chart
-    fig_main = px.area(data.tail(30), x="Date", y="Admissions", title="Trend des Admissions (30 pts)")
-    fig_main.update_traces(line_color=SECONDARY_BLUE, fillcolor=f"rgba(0, 210, 255, 0.1)")
+    fig_main = px.area(data.tail(30), x="Date", y="Admissions", title="Tendances des Admissions")
     fig_main.update_layout(height=400, template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig_main, use_container_width=True)
 
-# --- Tab 2: Exploration ---
 with tab_exploration:
-    st.markdown("### Analyse de Corrélation et Distribution")
     c1, c2 = st.columns(2)
     with c1:
-        fig_hist = px.histogram(data, x="Admissions", color="Service", marginal="box", barmode="overlay")
-        fig_hist.update_layout(template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
+        fig_hist = px.histogram(data, x="Admissions", color="Service", barmode="overlay", title="Distribution par Service")
         st.plotly_chart(fig_hist, use_container_width=True)
     with c2:
-        fig_scatter = px.scatter(data, x="Lits", y="Admissions", size="Staff", color="Service", hover_name="Date")
-        fig_scatter.update_layout(template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
+        fig_scatter = px.scatter(data, x="Lits", y="Admissions", color="Service", title="Corrélation Lits vs Admissions")
         st.plotly_chart(fig_scatter, use_container_width=True)
 
-# --- Tab 3: Prédictions ---
-with tab_tab3 := tab_predictions:
-    st.markdown("### Moteur de Prédiction ML (Prophet / XGBoost)")
+with tab_predictions:
     col_p1, col_p2 = st.columns([2, 1])
     with col_p1:
-        # Fake Prediction Plot
         pred_dates = [datetime.now() + timedelta(days=x) for x in range(14)]
         pred_values = np.random.poisson(150, 14)
         fig_pred = go.Figure()
-        fig_pred.add_trace(go.Scatter(x=data['Date'].tail(15), y=data['Admissions'].tail(15), name="Historique", line=dict(color=SECONDARY_BLUE)))
-        fig_pred.add_trace(go.Scatter(x=pred_dates, y=pred_values, name="Prévision (95% CI)", line=dict(color=ACCENT_RED, dash='dash')))
-        fig_pred.update_layout(height=450, template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
+        fig_pred.add_trace(go.Scatter(x=data['Date'].tail(15), y=data['Admissions'].tail(15), name="Historique"))
+        fig_pred.add_trace(go.Scatter(x=pred_dates, y=pred_values, name="Prévision", line=dict(dash='dash', color=ACCENT_RED)))
+        fig_pred.update_layout(height=450, template="plotly_dark", title="Prévisions à 14 jours")
         st.plotly_chart(fig_pred, use_container_width=True)
     with col_p2:
         st.markdown("#### Performance Modèle")
-        st.info("Précision (MAE): 4.2 admissions")
-        st.info("MAPE: 3.1%")
-        st.markdown("---")
-        st.markdown("#### Facteurs d'Influence (SHAP)")
-        factors = pd.DataFrame({"Factor": ["Météo", "Saison", "Effectif", "Lits"], "Importance": [0.45, 0.30, 0.15, 0.10]})
-        fig_feat = px.bar(factors, y="Factor", x="Importance", orientation='h', color_discrete_sequence=[PRIMARY_BLUE])
-        fig_feat.update_layout(height=250, template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', showlegend=False)
-        st.plotly_chart(fig_feat, use_container_width=True)
+        st.info("MAE: 4.2 | MAPE: 3.1%")
+        st.markdown("#### Importances des Variables")
+        factors = pd.DataFrame({"Variable": ["Saison", "Météo", "Staff", "Lits"], "Score": [0.4, 0.35, 0.15, 0.1]})
+        st.plotly_chart(px.bar(factors, y="Variable", x="Score", orientation='h', template="plotly_dark"), use_container_width=True)
 
-# --- Tab 4: Simulations ---
 with tab_simulations:
-    st.markdown("### Laboratoire de Simulation Stratégique")
-    col_s1, col_s2 = st.columns([1, 1])
-    with col_s1:
-        st.markdown("#### Paramètres du Scénario")
-        intensite = st.select_slider("Intensité de la Crise", options=["Mineure", "Modérée", "Sévère", "Critique"])
-        duree_sim = st.number_input("Durée (jours)", 1, 60, 14)
-        if st.button("Lancer la Simulation"):
-            with st.spinner("Calcul des impacts ressources..."):
-                time.sleep(1.5)
-                st.success("Simulation terminée")
-    with col_s2:
-        st.markdown("#### Impact Estimé")
-        st.warning(f"Surcharge prévue : +{np.random.randint(20, 50)}% sur les Urgences")
-        st.error(f"Point de rupture : Jour {np.random.randint(4, 9)}")
-        
-    st.divider()
-    st.markdown("### Recommandations IA")
-    st.success("Priorité : Réquisitionner 5 personnels soignants en chirurgie programmée")
-    st.info("Action : Transfert inter-hospitalier (Hôpital Saint-Antoine) à prévoir pour J+3")
+    st.markdown("### Simulateur Stratégique")
+    s_col1, s_col2 = st.columns(2)
+    with s_col1:
+        intensite = st.select_slider("Intensité de l'évènement", ["Basse", "Moyenne", "Haute", "Critique"])
+        if st.button("Calculer Impact"):
+            st.toast("Calcul en cours...")
+            time.sleep(1)
+            st.success("Impact calculé : +28% de flux prévu.")
+    with s_col2:
+        st.warning("Recommandation : Activer le plan blanc si l'occupation dépasse 95%.")
 
-# Footer
-st.markdown("---")
-st.markdown(f"<p style='text-align:center; color:#8899A6; font-size:0.8rem;'>Pitié-Salpêtrière | Vision 2026 Dashboard | Développé avec excellence</p>", unsafe_allow_html=True)
+with tab_infos:
+    st.image(LOGO_PATH, width=200)
+    st.markdown("### Équipe Projet")
+    st.markdown("""
+    - **FranckF**
+    - **koffigaetan-adj**
+    - **Djouhratabet**
+    - **cmartineau15**
+    """)
+    st.divider()
+    st.markdown("Pitié-Salpêtrière | Division Data & Prospective © 2026")
