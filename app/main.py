@@ -89,7 +89,6 @@ st.markdown(f"""
         display: flex;
         align-items: center;
         justify-content: space-between;
-        height: 100vh;
         max-height: 100vh;
         gap: 50px;
         padding-top: 0;
@@ -240,9 +239,31 @@ with tab_exp:
     ])
     
     with sub_tab_adm:
-        st.markdown("## Analyse Approfondie des Admissions (EDA_Admission)")
+        st.markdown("## ANALYSE DES ADMISSIONS 2024")
         
-        # 1. Distributions Categoriques
+        # --- Overview Stats ---
+        st.markdown("### Vue d'ensemble des données")
+        o1, o2, o3, o4 = st.columns(4)
+        o1.metric("Période d'analyse", f"{df_adm['date_entree'].min().strftime('%d/%m/%Y')} → {df_adm['date_entree'].max().strftime('%d/%m/%Y')}")
+        o2.metric("Total Admissions", f"{len(df_adm):,}")
+        o3.metric("Services/Pôles", f"{df_adm['service'].nunique()}")
+        o4.metric("Modes d'Entrée", f"{df_adm['mode_entree'].nunique()}")
+
+        # --- Admissions Table ---
+        st.divider()
+        st.markdown("### Répartition par Type d'Admission")
+        type_counts = df_adm['service'].value_counts().reset_index()
+        type_counts.columns = ['Service', 'Nombre d\'admissions']
+        type_counts['Pourcentage (%)'] = (type_counts['Nombre d\'admissions'] / len(df_adm) * 100).round(2)
+        
+        st.dataframe(
+            type_counts.style.background_gradient(subset=['Nombre d\'admissions'], cmap='Blues'),
+            use_container_width=True,
+            hide_index=True
+        )
+
+        # --- Rest of the EDA charts ---
+        st.divider()
         st.markdown("### Distributions des Variables Catégorielles")
         exp_c1, exp_c2 = st.columns(2)
         
@@ -316,6 +337,30 @@ with tab_exp:
         fig_out.add_hline(y=upper_b, line_dash="dash", line_color=ACCENT_RED, annotation_text="Seuil IQR")
         fig_out.update_layout(title="Identification des Pics Hors-Normes", template="plotly_dark")
         st.plotly_chart(fig_out, use_container_width=True)
+
+        # --- Final Insights Summary ---
+        st.divider()
+        st.markdown("### SYNTHÈSE FINALE - INSIGHTS PRINCIPAUX")
+        
+        # Recalculate stats for insights
+        monthly_ad_idx = df_adm.groupby('mois_nom').size().idxmax()
+        monthly_ad_max = df_adm.groupby('mois_nom').size().max()
+        geo_top = df_adm['departement_patient'].value_counts().index[0]
+        geo_top_pct = (df_adm['departement_patient'].value_counts().iloc[0] / len(df_adm) * 100).round(1)
+        pole_top = df_adm['service'].value_counts().index[0]
+        pole_top_pct = (df_adm['service'].value_counts().iloc[0] / len(df_adm) * 100).round(1)
+        
+        insights_data = [
+            {"Catégorie": "Volume", "Insight": f"Total de {len(df_adm):,} admissions en 2024", "Impact": "Élevé", "Action": "Planification des ressources"},
+            {"Catégorie": "Temporel", "Insight": f"Moyenne de {daily_stats.mean():.0f} admissions/jour (±{daily_stats.std():.0f})", "Impact": "Élevé", "Action": "Staffing dynamique"},
+            {"Catégorie": "Saisonnalité", "Insight": f"Pic en {monthly_ad_idx} ({monthly_ad_max:,} admissions)", "Impact": "Moyen", "Action": "Anticipation saisonnière"},
+            {"Catégorie": "Géographie", "Insight": f"Top origine: {geo_top} ({geo_top_pct}%)", "Impact": "Moyen", "Action": "Partenariats locaux"},
+            {"Catégorie": "Pôle", "Insight": f"Pôle dominant: {pole_top} ({pole_top_pct}%)", "Impact": "Élevé", "Action": "Allocation ressources ciblée"},
+            {"Catégorie": "Anomalies", "Insight": f"{len(outliers)} jours avec pics anormaux détectés", "Impact": "Élevé", "Action": "Plan de crise"},
+            {"Catégorie": "Variabilité", "Insight": f"CV = {(daily_stats.std()/daily_stats.mean()*100):.1f}%", "Impact": "Moyen", "Action": "Flexibilité opérationnelle"}
+        ]
+        
+        st.table(pd.DataFrame(insights_data))
 
     with sub_tab_log:
         st.info("Intégration des données logistiques (lits, personnel) en cours...")
