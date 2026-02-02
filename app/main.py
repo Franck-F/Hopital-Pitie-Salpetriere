@@ -227,11 +227,11 @@ with st.sidebar:
 
 # Dashboard Content
 tab_acc, tab_exp, tab_ml, tab_sim, tab_tea = st.tabs([
-    "CENTRAL", "DYNAMIQUE", "PREDICTIF", "MODULAIRE", "COLLECTIF"
+    "TABLEAU DE BORD", "EXPLORATION DATA", "PRÉVISIONS ML", "SIMULATEUR", "ÉQUIPE PROJET"
 ])
 
 with tab_acc:
-    st.markdown("<h2 style='font-weight:800;'>Tableau de Bord Central</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='font-weight:800;'>Panorama de l'Activité</h2>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     c1.metric("ACTIVITÉ 24H", "154 PATIENTS", "14%")
     c2.metric("OCCUPATION RÉA", "97.2%", "2.1%")
