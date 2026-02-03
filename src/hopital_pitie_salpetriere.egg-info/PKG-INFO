@@ -28,6 +28,7 @@ Requires-Dist: joblib>=1.3.0
 Requires-Dist: matplotlib>=3.10.8
 Requires-Dist: seaborn>=0.13.2
 Requires-Dist: summarytools>=0.3.0
+Requires-Dist: nbformat>=5.10.4
 Provides-Extra: dev
 Requires-Dist: pytest>=9.0.2; extra == "dev"
 Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
