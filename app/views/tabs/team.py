@@ -233,8 +233,7 @@ def render_team():
     
     st.markdown("</div>", unsafe_allow_html=True)
     
-    # Footer
-    st.markdown(f"""
+    kdown(f"""
             <p style='margin: 0; font-size: 1.1rem; color: {SECONDARY_BLUE}; font-weight: 600;'>
                 Projet Vision 2026 - Hopital Pitie-Salpetriere
             </p>

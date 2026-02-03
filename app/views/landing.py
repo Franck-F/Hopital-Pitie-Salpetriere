@@ -26,7 +26,6 @@ def show_landing_page(go_to_dashboard_callback):
             go_to_dashboard_callback()
             
     with col_visual:
-        st.markdown("<div class='floating-card'>", unsafe_allow_html=True)
         if HERO_BG64:
             st.markdown(f"<img src='data:image/png;base64,{HERO_BG64}' style='width:100%; border-radius:30px;'>", unsafe_allow_html=True)
         else:
