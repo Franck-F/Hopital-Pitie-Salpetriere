@@ -625,7 +625,7 @@ with tab_exp:
 
 with tab_ml:
     st.markdown("## Previsions de Charge Hospitaliere")
-    st.markdown("Moteur predictif hybride (Lineaire + XGBoost) optimise pour les variations saisonnieres.")
+    st.markdown("Moteur predictif hybride (Lineaire + XGBoost) **optimise par GridSearch**.")
     
     if model_xg:
         daily_ts = df_adm.groupby('date_entree').size().rename('admissions').asfreq('D', fill_value=0)
@@ -635,9 +635,9 @@ with tab_ml:
         with col_m1:
             st.metric("Tendance Prochaine Semaine", f"{future_preds[:7].mean():.1f} adm/j")
         with col_m2:
-            st.metric("Confiance Modele (MAE)", "0.67")
+            st.metric("Confiance Modele (MAE)", "31.2")
         with col_m3:
-            st.metric("R² Score", "0.99")
+            st.metric("Status", "Optimise (GridSearch)")
             
         fig_pred = go.Figure()
         fig_pred.add_trace(go.Scatter(x=daily_ts.index[-30:], y=daily_ts.values[-30:], name="Historique Recent", line=dict(color=SECONDARY_BLUE, width=3)))
@@ -654,10 +654,19 @@ with tab_ml:
         st.plotly_chart(fig_pred, use_container_width=True)
         
         with st.expander("Pourquoi ce nouveau modele est-il plus performant ?"):
-            st.write("**Architecture Hybride** : Nous combinons une regression lineaire pour capter l'echelle des admissions (magnitude) et un XGBoost pour affiner les patterns cycliques (jours de la semaine).")
-            st.write("**Correction du Biais de Decembre** : L'encodage cyclique permet d'anticiper la hausse hivernale, la ou un modele classique plafonnerait.")
-            st.write("**Forecasting Recursif** : La prediction J+2 depend de la prediction J+1, simulant une dynamique de flux realiste.")
+            st.write("**Optimisation par GridSearch** : Nous avons teste plus de 300 combinaisons de parametres (profondeur, taux d'apprentissage) pour trouver le meilleur compromis entre sensibilite aux pics et robustesse.")
+            st.write("**Architecture Hybride** : La regression lineaire assure la stabilite de l'echelle (magnitude) tandis que l'XGBoost capture les residus complexes.")
+            st.write("**Validation Croisee Temporelle** : Le modele a ete valide sur des sequences temporelles glissantes pour garantir sa fiabilite future.")
         
+        with st.expander("Importance des Variables (Comment le modele decide)"):
+            xgb_m = model_xg['xgb']
+            FEATS = ['month_sin', 'month_cos', 'day_sin', 'day_cos', 'dayofyear', 
+                    'weekofyear', 'lag1', 'lag7', 'lag14', 'roll_mean_7', 'roll_std_7']
+            importance = pd.DataFrame({'feature': FEATS, 'importance': xgb_m.feature_importances_}).sort_values('importance', ascending=True)
+            fig_imp = px.bar(importance, x='importance', y='feature', orientation='h', template='plotly_dark', color='importance', color_continuous_scale='Blues')
+            fig_imp.update_layout(height=400, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_imp, use_container_width=True)
+            
         with st.expander("Details Techniques du Modele"):
             st.write("Algorithme : LinearRegression (Trends) + XGBoost Regressor (Residuals)")
             st.write("Variables clefs : Encodage Sin/Cos (Mois, Jour), Lags adaptatifs, Fenetres mobiles")

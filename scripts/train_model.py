@@ -5,6 +5,7 @@ import joblib
 import os
 from sklearn.metrics import mean_absolute_error
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 
 # Load data
 df_adm = pd.read_csv('data/raw/admissions_hopital_pitie_2024.csv')
@@ -53,23 +54,40 @@ reg_lr = LinearRegression()
 reg_lr.fit(X, y)
 y_lr = reg_lr.predict(X)
 
-# 2. XGBoost for Residuals (Local patterns/shocks)
+# 2. XGBoost for Residuals (Optimization with GridSearchCV)
 residuals = y - y_lr
-reg_xgb = xgb.XGBRegressor(
-    n_estimators=1000, 
-    learning_rate=0.03, 
-    max_depth=6, 
-    objective='reg:squarederror',
-    base_score=0 # Residuals are centered around 0
+
+xgb_model = xgb.XGBRegressor(objective='reg:squarederror', base_score=0)
+
+param_grid = {
+    'n_estimators': [500, 1000],
+    'learning_rate': [0.01, 0.03, 0.05],
+    'max_depth': [4, 6, 8],
+    'subsample': [0.8, 1.0],
+    'colsample_bytree': [0.8, 1.0]
+}
+
+tscv = TimeSeriesSplit(n_splits=5)
+grid_search = GridSearchCV(
+    estimator=xgb_model,
+    param_grid=param_grid,
+    cv=tscv,
+    scoring='neg_mean_absolute_error',
+    verbose=1,
+    n_jobs=-1
 )
-reg_xgb.fit(X, residuals)
+
+grid_search.fit(X, residuals)
+reg_xgb = grid_search.best_estimator_
+
+print(f"Best Parameters found: {grid_search.best_params_}")
 
 # Save Hybrid Bundle
 os.makedirs('models', exist_ok=True)
 joblib.dump({'lr': reg_lr, 'xgb': reg_xgb}, 'models/hybrid_admissions_v1.joblib')
 
-print("Hybrid Model trained and saved to models/hybrid_admissions_v1.joblib")
+print("Optimized Hybrid Model trained and saved to models/hybrid_admissions_v1.joblib")
 mae_lr = mean_absolute_error(y, y_lr)
 mae_hybrid = mean_absolute_error(y, y_lr + reg_xgb.predict(X))
-print(f"Linear MAE: {mae_lr:.2f}")
-print(f"Hybrid MAE: {mae_hybrid:.2f}")
+print(f"Linear Baseline MAE: {mae_lr:.2f}")
+print(f"Optimized Hybrid MAE: {mae_hybrid:.2f}")
