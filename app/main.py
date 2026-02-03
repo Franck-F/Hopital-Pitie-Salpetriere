@@ -692,13 +692,13 @@ with tab_ml:
         st.error("Modele XGBoost non detecte. Veuillez lancer l'entrainement.")
 
 with tab_sim:
-    st.markdown("## ⚡ Simulateur de Tension Hospitalière")
+    st.markdown("## Simulateur de Tension Hospitalière")
     st.markdown("""
         Ce simulateur utilise les **prévisions du modèle XGBoost** comme baseline et vous permet de tester des scénarios de crise 
         (ex: épidémie, plan blanc) pour évaluer la résilience des capacités actuelles de la Pitié-Salpêtrière.
     """)
     
-    with st.expander("🛠️ Configuration du Scénario de Stress", expanded=True):
+    with st.expander("Configuration du Scénario de Stress", expanded=True):
         sc_col1, sc_col2 = st.columns(2)
         with sc_col1:
             intensite = st.slider("Surcroît d'Admissions Prévues (%)", 0, 200, 50, help="Pourcentage s'ajoutant aux prévisions du modèle.")
@@ -716,49 +716,75 @@ with tab_sim:
             # Stress calculation
             stress_load = avg_predicted * (1 + intensite/100)
             
-            # Display Metrics
+            # Initialize metrics
+            utilization = 0.0
+            depletion_days = 30.0
+            fig_sim = None
+            
+            # Display Metrics Baseline
             m_col1, m_col2, m_col3 = st.columns(3)
             m_col1.metric("Baseline Modèle", f"{avg_predicted:.1f}/j")
             m_col2.metric("Charge Simulée", f"{stress_load:.1f}/j", delta=f"+{intensite}%", delta_color="inverse")
             
+            # Data Unpacking
+            df_lits, df_perso, _, df_stocks = get_logistique_data()
+            
             # Resource Logic
             if "Lits" in ressource_type:
-                df_lits, _, _, _ = get_logistique_data()
-                total_capacity = df_lits['lits_totaux'].iloc[-10:].sum() # Top 10 poles
+                total_capacity = df_lits['lits_totaux'].iloc[-10:].sum()
                 occup_base = df_lits['lits_occupes'].iloc[-10:].sum()
-                utilization = (occup_base / total_capacity) * (1 + intensite/200) # Heuristic
+                utilization = (occup_base / total_capacity) * (1 + intensite/200)
                 m_col3.metric("Saturation Lits", f"{min(utilization*100, 100):.1f}%")
                 
                 fig_sim = go.Figure(go.Indicator(
                     mode = "gauge+number",
-                    value = utilization * 100,
+                    value = min(utilization * 100, 100),
                     title = {'text': "Indice de Saturation Lits"},
                     gauge = {
-                        'axis': {'range': [None, 120]},
+                        'axis': {'range': [None, 100]},
                         'bar': {'color': ACCENT_RED if utilization > 0.9 else SECONDARY_BLUE},
                         'steps' : [
                             {'range': [0, 70], 'color': "rgba(0, 166, 80, 0.2)"},
                             {'range': [70, 90], 'color': "rgba(255, 127, 14, 0.2)"},
-                            {'range': [90, 120], 'color': "rgba(231, 76, 60, 0.2)"}]
+                            {'range': [90, 100], 'color': "rgba(231, 76, 60, 0.2)"}]
                     }
                 ))
             elif "Effectif" in ressource_type:
-                _, df_perso, _, _ = get_logistique_data()
                 total_staff = df_perso['effectif_total'].sum()
-                utilization = (stress_load * 1.5) / (total_staff / 10) # 1 patient for 1.5 staff ratio
+                utilization = (stress_load * 1.5) / (total_staff / 10)
                 m_col3.metric("Tension Staff", f"{min(utilization*100, 100):.1f}%")
                 
                 fig_sim = px.bar(df_perso.groupby('categorie')['effectif_total'].sum().reset_index(), 
-                                x='categorie', y='effectif_total', title="Capacité Staff par Catégorie")
+                                x='categorie', y='effectif_total', title="Capacité Staff par Catégorie",
+                                template="plotly_dark", color_discrete_sequence=[SECONDARY_BLUE])
             else:
-                _, _, _, df_stocks = get_logistique_data()
+                # Stock Logic
                 depletion_days = 30 / (1 + intensite/100)
                 m_col3.metric("Autonomie Stocks", f"{depletion_days:.1f} Jours")
-                fig_sim = px.line(df_stocks.head(50), x='date', y='stock_actuel', color='medicament', title="Projection Déplétion Stocks")
+                
+                if not df_stocks.empty:
+                    # Filter for top medicines to ensure consistent lengths and avoid Plotly errors
+                    df_viz = df_stocks.copy()
+                    top_meds = df_viz['medicament'].unique()[:5]
+                    df_viz = df_viz[df_viz['medicament'].isin(top_meds)].sort_values('date')
+                    fig_sim = px.line(df_viz, x='date', y='stock_actuel', color='medicament', 
+                                     title="Projection Déplétion Stocks (Top 5 Médicaments)",
+                                     template="plotly_dark", color_discrete_sequence=px.colors.qualitative.Safe)
+                else:
+                    st.warning("Données de stocks non disponibles.")
 
-            st.plotly_chart(fig_sim, use_container_width=True)
+            if fig_sim:
+                fig_sim.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+                st.plotly_chart(fig_sim, use_container_width=True)
             
-            if utilization > 0.9 or (ressource_type == "Stocks de Sécurité (Médicaments)" and depletion_days < 7):
+            # Final Status Message
+            is_critical = False
+            if "Lits" in ressource_type or "Effectif" in ressource_type:
+                if utilization > 0.9: is_critical = True
+            elif depletion_days < 7:
+                is_critical = True
+                
+            if is_critical:
                 st.error("⚠️ ALERTE CRITIQUE : Les capacités actuelles ne permettent pas d'absorber ce pic sur la durée.")
                 st.info("Recommandation : Déclenchement du Plan Blanc et rappel des effectifs en congés.")
             else:
