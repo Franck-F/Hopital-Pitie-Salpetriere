@@ -24,7 +24,7 @@ st.set_page_config(
 # --- Path Constants ---
 LOGO_PATH = "app/assets/logo_ps.png"
 HERO_BG_PATH = "app/assets/hero_bg.png"
-DATA_ADMISSION_PATH = "data/raw/admissions_hopital_pitie_2024.csv"
+DATA_ADMISSION_PATH = "data/raw/admissions_hopital_pitie_2024_2025.csv"
 PRIMARY_BLUE = "#005ba1"
 SECONDARY_BLUE = "#00d2ff"
 ACCENT_RED = "#c8102e"
@@ -218,7 +218,7 @@ def get_patient_sejour_data():
 
 @st.cache_resource
 def load_champion_model():
-    m_path = "models/lightgbm_final_v2.joblib"
+    m_path = "models/lightgbm_final_v3_2425.joblib"
     if os.path.exists(m_path):
         return joblib.load(m_path)
     return None
@@ -233,39 +233,44 @@ def predict_future_admissions(df_daily, model, days=14):
     preds = []
     future_dates = []
     
-    # Recursive Forecasting with ultra-optimized XGBoost
-    holidays = ['2024-01-01', '2024-04-01', '2024-05-01', '2024-05-08', 
-                '2024-05-09', '2024-05-20', '2024-07-14', '2024-08-15', 
-                '2024-11-01', '2024-11-11', '2024-12-25']
-    holiday_dates = pd.to_datetime(holidays)
-    
-    # Reference holidays for distance calculation
-    holidays = pd.to_datetime(['2024-01-01', '2024-04-01', '2024-05-01', '2024-05-08', 
-                             '2024-05-09', '2024-05-20', '2024-07-14', '2024-08-15', 
-                             '2024-11-01', '2024-11-11', '2024-12-25'])
+    holidays = pd.to_datetime(['2024-01-01', '2024-05-01', '2024-07-14', '2024-12-25',
+                               '2025-01-01', '2025-05-01', '2025-07-14', '2025-12-25'])
     
     for i in range(1, days + 1):
         next_date = last_date + timedelta(days=i)
         future_dates.append(next_date)
         
-        # Features for next date - EXACT MATCH WITH lightgbm_final_v2.joblib
+        # Advanced Feature Reconstruction (V3)
         row = pd.DataFrame(index=[next_date])
+        
+        # Lags
+        for l in [1, 2, 7, 14]:
+            row[f'lag{l}'] = current_ts.iloc[-l] if len(current_ts) >= l else current_ts.iloc[-1]
+            
+        # Rolling
+        for w in [7, 14]:
+            row[f'roll_mean{w}'] = current_ts.iloc[-w:].mean() if len(current_ts) >= w else current_ts.iloc[-1]
+            
+        # Calendar
         row['day'] = next_date.dayofweek
         row['month'] = next_date.month
-        row['lag1'] = current_ts.iloc[-1]
-        row['lag2'] = current_ts.iloc[-2] if len(current_ts) >= 2 else current_ts.iloc[-1]
-        row['lag7'] = current_ts.iloc[-7] if len(current_ts) >= 7 else current_ts.iloc[-1]
+        
+        # Seasonal (Cyclic)
+        row['sin_day'] = np.sin(2 * np.pi * next_date.dayofyear / 365.25)
+        row['cos_day'] = np.cos(2 * np.pi * next_date.dayofyear / 365.25)
+        row['sin_month'] = np.sin(2 * np.pi * next_date.month / 12)
+        row['cos_month'] = np.cos(2 * np.pi * next_date.month / 12)
+        
+        # Holiday
         row['is_holiday'] = 1 if next_date in holidays else 0
-        row['dist_holiday'] = (holidays[holidays >= next_date].min() - next_date).days if any(holidays >= next_date) else 365
         
-        FEATS = ['day', 'month', 'lag1', 'lag2', 'lag7', 'is_holiday', 'dist_holiday']
+        FEATS = ['lag1', 'lag2', 'lag7', 'lag14', 'roll_mean7', 'roll_mean14', 'day', 'month', 
+                 'sin_day', 'cos_day', 'sin_month', 'cos_month', 'is_holiday']
+        
         X_row = row[FEATS]
-        
-        # LightGBM Champion Prediction
         final_pred = model.predict(X_row)[0]
         
         preds.append(final_pred)
-        # Augment series for next recursive step
         current_ts.loc[next_date] = final_pred
         
     return future_dates, np.array(preds)
@@ -309,7 +314,7 @@ st.logo(LOGO_PATH, icon_image=LOGO_PATH)
 # --- Premium Dashboard Header ---
 st.markdown(f"""
     <div style='display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 30px; padding-top: 10px;'>
-        <h1 style='margin: 0; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #ffffff, {SECONDARY_BLUE}); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>PITIE-SALPETRIERE <span style='font-weight: 300; font-size: 0.8em; color: #8899A6;'>VISION 2026</span></h1>
+        <h1 style='margin: 0; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #ffffff, {SECONDARY_BLUE}); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>PITIE-SALPETRIERE <span style='font-weight: 300; font-size: 0.8em; color: #8899A6;'>VISION 2024-2025</span></h1>
     </div>
 """, unsafe_allow_html=True)
 
@@ -623,15 +628,6 @@ with tab_exp:
             fig_abs.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_abs, use_container_width=True)
 
-        # --- Strategic Monitoring Heatmap ---
-        st.divider()
-        st.markdown("### Heatmap de Tension Logistique Globale")
-        pivot_log = df_lits.groupby(['service', 'date'])['taux_occupation'].mean().unstack().T
-        fig_heat_log = px.imshow(pivot_log.values, x=pivot_log.columns, y=pivot_log.index,
-                                 title="Indice de Saturation Quotidien par Pole",
-                                 color_continuous_scale='RdBu_r', template="plotly_dark")
-        fig_heat_log.update_layout(height=600, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig_heat_log, use_container_width=True)
 
         # --- Summary Insights Logistique ---
         st.divider()
@@ -871,20 +867,22 @@ with tab_ml:
         )
         st.plotly_chart(fig_pred, use_container_width=True)
         
-        with st.expander("Optimisation LightGBM Champion"):
-            st.write("Le modele Champion a ete selectionne pour sa capacite de generalisation superieure sur les donnees du mois de decembre 2024.")
-            st.write("**Architecture** : Utilisation exclusive des retards temporels (Lags) pour capturer la dynamique interne des admissions.")
-        
-        with st.expander("Importance des Variables"):
-            FEATS = ['day', 'month', 'lag1', 'lag2', 'lag7', 'is_holiday', 'dist_holiday']
+        # --- Importance des Variables (V3) ---
+        with st.expander("Importance des Variables (V3)"):
+            FEATS = ['lag1', 'lag2', 'lag7', 'lag14', 'roll_mean7', 'roll_mean14', 'day', 'month', 
+                     'sin_day', 'cos_day', 'sin_month', 'cos_month', 'is_holiday']
             
             if len(FEATS) == len(model_lgbm.feature_importances_):
                 importance = pd.DataFrame({'feature': FEATS, 'importance': model_lgbm.feature_importances_}).sort_values('importance', ascending=True)
                 fig_imp = px.bar(importance, x='importance', y='feature', orientation='h', template='plotly_dark', color='importance', color_continuous_scale='Blues')
-                fig_imp.update_layout(height=400, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+                fig_imp.update_layout(height=450, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
                 st.plotly_chart(fig_imp, use_container_width=True)
             else:
                 st.warning(f"Incohérence : Le modèle attend {len(model_lgbm.feature_importances_)} variables.")
+        
+        with st.expander("Optimisation LightGBM Champion V3"):
+            st.write("Le modele Champion V3 integre des features avancees pour une precision accrue sur la periode 2024-2025.")
+            st.write("**Architecture** : Lags profonds, statistiques glissantes (Rolling) et saisonnalite cyclique.")
             
         with st.expander("Details Techniques du Modele"):
             st.write("Algorithme : LightGBM (Gradient Boosting)")
