@@ -586,7 +586,7 @@ with tab_sim:
 
 with tab_tea:
     st.markdown("<h1 style='text-align:center;'>Équipe Projet Vision 2026</h1>", unsafe_allow_html=True)
-    team_cols = st.columns(4)
+    team_cols = st.columns(5)
     members = ["Franck", "Gaetan", "Djouhra", "Charlotte", "Farah"]
     for i, member in enumerate(members):
         with team_cols[i]:
