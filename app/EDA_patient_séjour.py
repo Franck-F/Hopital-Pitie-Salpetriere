@@ -1,5 +1,5 @@
 # Generated from: EDA_patient_séjour.ipynb
-# Converted at: 2026-02-03T09:08:49.071Z
+# Converted at: 2026-02-03T16:12:35.879Z
 # Next step (optional): refactor into modules & generate tests with RunCell
 # Quick start: pip install runcell
 
@@ -349,6 +349,8 @@ fig4.update_layout(
 )
 fig4.show()
 
+
+
 import plotly.express as px
 
 # ==============================================================================
@@ -471,7 +473,7 @@ dates_fictives = pd.date_range(start="2024-01-01", end="2024-12-31", freq="h") #
 # On assigne une date aléatoire à chaque séjour existant
 sejours['date_admission'] = np.random.choice(dates_fictives, size=len(sejours))
 
-print("✅ Colonne 'date_admission' simulée et ajoutée avec succès.")
+print(" Colonne 'date_admission' simulée et ajoutée avec succès.")
 
 # 2. PRÉPARATION (Agrégation par jour)
 # On ne garde que la partie "Date" (YYYY-MM-DD) sans l'heure
@@ -533,7 +535,7 @@ import plotly.express as px
 # 1. RÉPARATION DES DONNÉES (Simulation de la colonne date manquante)
 # ==============================================================================
 if 'date_admission' not in sejours.columns:
-    print("⚠️ Colonne 'date_admission' introuvable. Génération de dates fictives pour 2024...")
+    print("Colonne 'date_admission' introuvable. Génération de dates fictives pour 2024...")
     # On génère des dates aléatoires sur l'année 2024
     dates_possibles = pd.date_range(start="2024-01-01", end="2024-12-31", freq="h")
     np.random.seed(42)
@@ -758,4 +760,66 @@ fig.update_layout(
     height=500
 )
 
+fig.show()
+
+import plotly.express as px
+
+# On trie pour avoir les plus gros pôles en haut
+age_pole_sorted = age_pole.sort_values(by="nb_sejours", ascending=True)
+
+fig = px.bar(
+    age_pole_sorted,
+    x="nb_sejours",
+    y="pole",
+    color="age_bin", # Une couleur par tranche d'âge
+    orientation='h', # Horizontal
+    title="<b>Répartition des Âges par Pôle</b><br><span style='font-size:13px;color:grey'>Qui fréquente quel service ?</span>",
+    text_auto=True, # Affiche le nombre dans la barre
+    template="plotly_white",
+    # On choisit une palette séquentielle (du jeune au vieux)
+    color_discrete_sequence=px.colors.sequential.RdBu_r 
+)
+
+fig.update_layout(
+    xaxis_title="Nombre de séjours",
+    yaxis_title=None,
+    legend_title="Classe d'âge",
+    height=600,
+    title_x=0.5
+)
+
+fig.show()
+
+
+import plotly.express as px
+
+# 1. Extraction des features temporelles
+sejours['heure'] = sejours['date_admission'].dt.hour
+sejours['jour'] = sejours['date_admission'].dt.day_name()
+
+# Ordre correct des jours
+jours_ordre = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+# 2. Agrégation
+tension = sejours.groupby(['jour', 'heure']).size().reset_index(name='nb_admissions')
+
+# 3. Heatmap (Code corrigé)
+fig = px.density_heatmap(
+    tension,
+    x="heure",
+    y="jour",
+    z="nb_admissions",
+    nbinsx=24, # Une case par heure
+    category_orders={"jour": jours_ordre}, # Force l'ordre Lundi->Dimanche
+    color_continuous_scale="YlOrRd", # <--- CORRECTION ICI (Yellow-Orange-Red)
+    title="<b>Heatmap de Tension : Quand arrivent les patients ?</b><br><span style='font-size:13px;color:grey'>Zones rouges = Pic d'activité (Staff nécessaire)</span>",
+    template="plotly_white"
+)
+
+fig.update_layout(
+    xaxis_title="Heure d'admission",
+    yaxis_title=None,
+    height=500
+)
+fig.update_traces(xgap=2, ygap=2) # Espacement pour faire "pro"
 fig.show()

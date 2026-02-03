@@ -306,7 +306,6 @@ st.logo(LOGO_PATH, icon_image=LOGO_PATH)
 # --- Premium Dashboard Header ---
 st.markdown(f"""
     <div style='display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 30px; padding-top: 10px;'>
-        <img src='data:image/png;base64,{get_base64_image(LOGO_PATH)}' width='80'>
         <h1 style='margin: 0; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #ffffff, {SECONDARY_BLUE}); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>PITIE-SALPETRIERE <span style='font-weight: 300; font-size: 0.8em; color: #8899A6;'>VISION 2026</span></h1>
     </div>
 """, unsafe_allow_html=True)
@@ -714,15 +713,25 @@ with tab_exp:
             fig_sexe.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_sexe, use_container_width=True)
         with dc2:
-            fig_age_sej = px.histogram(df_sej, x="age", nbins=40, marginal="box",
-                                     title="Pyramide des Ages a l'Admission",
+            fig_age_sej = px.histogram(df_sej, x="age", nbins=40, marginal="violin",
+                                     title="Pyramide des Ages a l'Admission (Densite)",
                                      template="plotly_dark", color_discrete_sequence=['#3498db'])
             fig_age_sej.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_age_sej, use_container_width=True)
 
-        # --- 3. Specialty Analysis ---
+        # --- New : Boxplot Detail Age par Type ---
         st.divider()
-        st.markdown("### Hierarchy et Duree de Sejour")
+        st.markdown("### Dispersion Detaillee de l'Age par Type d'Hospitalisation")
+        fig_box_notched = px.box(df_sej, x="type_hospit", y="age", color="type_hospit",
+                                 notched=True, points="suspectedoutliers",
+                                 title="Age Median et Outliers par Type de Sejour",
+                                 template="plotly_dark", color_discrete_sequence=px.colors.qualitative.Prism)
+        fig_box_notched.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False)
+        st.plotly_chart(fig_box_notched, use_container_width=True)
+
+        # --- 3. Specialty Analysis & Repartition Age ---
+        st.divider()
+        st.markdown("### Hierarchie et Structure Demographique des Poles")
         sc1, sc2 = st.columns(2)
         with sc1:
             fig_sun_sej = px.sunburst(df_sej, path=['pole', 'type_hospit'], values='age', # Proxy count
@@ -731,10 +740,14 @@ with tab_exp:
             fig_sun_sej.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_sun_sej, use_container_width=True)
         with sc2:
-            fig_box_sej = px.box(df_sej, x="type_hospit", y="age", color="type_hospit",
-                                 title="Age moyen par Type de Sejour", template="plotly_dark")
-            fig_box_sej.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-            st.plotly_chart(fig_box_sej, use_container_width=True)
+            # New : Repartition Ages par Pole
+            df_sej['age_bin'] = pd.cut(df_sej['age'], bins=[0, 18, 45, 65, 105], labels=['Enfants', 'Adultes', 'Seniors', 'Grand Age'])
+            age_pole = df_sej.groupby(['pole', 'age_bin']).size().reset_index(name='count')
+            fig_age_pole = px.bar(age_pole, x="count", y="pole", color="age_bin", orientation='h',
+                                  title="Repartition des Ages par Pole",
+                                  template="plotly_dark", color_discrete_sequence=px.colors.sequential.RdBu_r)
+            fig_age_pole.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", legend_title="Tranche d'age")
+            st.plotly_chart(fig_age_pole, use_container_width=True)
 
         # --- 4. Diagnostics Analysis ---
         st.divider()
@@ -807,21 +820,26 @@ with tab_exp:
         st.plotly_chart(fig_radar, use_container_width=True)
 
 
-        # --- 5. Temporal & Intensity ---
         st.divider()
-        st.markdown("### Intensite et Parcours")
+        st.markdown("### Intensite et Tension Horaire")
         
-        # Heatmap
-        order_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        order_months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-        
-        heat_data = df_sej.groupby(['mois_adm', 'jour_adm']).size().reset_index(name='count')
-        fig_heat_sej = px.density_heatmap(heat_data, x="mois_adm", y="jour_adm", z="count",
-                                          color_continuous_scale="RdBu_r",
-                                          category_orders={"jour_adm": order_days, "mois_adm": order_months},
-                                          title="Heatmap de Tension : Jours vs Mois", template="plotly_dark")
-        fig_heat_sej.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig_heat_sej, use_container_width=True)
+        qc1, qc2 = st.columns([2, 1])
+        with qc1:
+            # New : Hourly Tension Heatmap
+            df_sej['heure'] = df_sej['date_admission'].dt.hour
+            tension_h = df_sej.groupby(['jour_adm', 'heure']).size().reset_index(name='nb_admissions')
+            jours_ordre = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+            
+            fig_heat_h = px.density_heatmap(tension_h, x="heure", y="jour_adm", z="nb_admissions",
+                                             nbinsx=24, category_orders={"jour_adm": jours_ordre},
+                                             color_continuous_scale="YlOrRd",
+                                             title="Heatmap de Tension : Flux d'arrivee des patients",
+                                             template="plotly_dark")
+            fig_heat_h.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", xaxis_title="Heure d'admission")
+            st.plotly_chart(fig_heat_h, use_container_width=True)
+        with qc2:
+            st.info("Cette heatmap permet d'identifier les pics d'activite journaliers. Une concentration rouge indique un flux critique necessitant un renfort des effectifs d'accueil et de tri.")
+            st.metric("Heure de Pointe (Moyenne)", f"{df_sej['heure'].mode()[0]}h00")
         
         # --- Final Insights Séjour ---
         st.divider()
