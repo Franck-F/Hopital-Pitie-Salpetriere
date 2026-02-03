@@ -18,7 +18,7 @@ def render_team():
     # Section Equipe
     st.markdown("<div style='background: rgba(255,255,255,0.03); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px;'>", unsafe_allow_html=True)
     
-    st.markdown("## 👥 Equipe Data Science & Innovation")
+    st.markdown("## Equipe Data Science & Innovation")
     
     col1, col2 = st.columns(2)
     
@@ -26,8 +26,8 @@ def render_team():
         st.markdown(f"""
             <div style='background: linear-gradient(135deg, rgba(0,91,161,0.2) 0%, rgba(0,210,255,0.1) 100%); 
                         border-radius: 15px; padding: 25px; border: 1px solid rgba(0,210,255,0.3); margin-bottom: 20px;'>
-                <h3 style='margin: 0 0 15px 0; color: {SECONDARY_BLUE};'>Lead Data Scientist</h3>
-                <p style='margin: 5px 0; font-size: 1.1rem;'><strong>Franck F.</strong></p>
+                <h3 style='margin: 0 0 15px 0; color: {SECONDARY_BLUE};'>Data Scientist & Innovation</h3>
+                <p style='margin: 5px 0; font-size: 1.1rem;'><strong>Franck - Charlotte - Gaetan - Djouhra - Farah</strong></p>
                 <p style='margin: 5px 0; color: #8899A6;'>Modelisation Predictive & ML</p>
             </div>
         """, unsafe_allow_html=True)
