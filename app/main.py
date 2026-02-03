@@ -723,8 +723,7 @@ with tab_ml:
 with tab_sim:
     st.markdown("## Simulateur de Tension Hospitalière")
     st.markdown("""
-        Ce simulateur utilise les **prévisions du modèle XGBoost** comme baseline et vous permet de tester des scénarios de crise 
-        (ex: épidémie, plan blanc) pour évaluer la résilience des capacités actuelles de la Pitié-Salpêtrière.
+        Tester des scénarios de crise (ex: épidémie, plan blanc) pour évaluer la résilience des capacités actuelles de la Pitié-Salpêtrière.
     """)
     
     with st.expander("Configuration du Scénario de Stress", expanded=True):
@@ -796,7 +795,7 @@ with tab_sim:
                     df_viz = df_stocks.copy()
                     top_meds = df_viz['medicament'].unique()[:5]
                     df_viz = df_viz[df_viz['medicament'].isin(top_meds)].sort_values('date')
-                    fig_sim = px.line(df_viz, x='date', y='stock_actuel', color='medicament', 
+                    fig_sim = px.line(df_viz, x='date', y='stock_fin', color='medicament', 
                                      title="Projection Déplétion Stocks (Top 5 Médicaments)",
                                      template="plotly_dark", color_discrete_sequence=px.colors.qualitative.Safe)
                 else:
