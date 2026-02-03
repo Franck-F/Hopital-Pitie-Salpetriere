@@ -50,16 +50,25 @@ def train_v3():
     X = df.drop(columns=['admissions'])
     y = df['admissions']
     
-    # Split (30 derniers jours pour test)
-    X_tr, y_tr = X.iloc[:-30], y.iloc[:-30]
-    X_te, y_te = X.iloc[-30:], y.iloc[-30:]
+    # Split Strict (Test = 4 derniers mois 2025, Train = Reste)
+    split_date = pd.Timestamp('2025-09-01')
     
+    X_tr = X[X.index < split_date]
+    y_tr = y[y.index < split_date]
+    
+    X_te = X[X.index >= split_date]
+    y_te = y[y.index >= split_date]
+    
+    print(f"Split defined: Train until {X_tr.index.max().date()}, Test from {X_te.index.min().date()}")
     print(f"Entrainement LightGBM (X shape: {X_tr.shape})...")
+    
+    # Configuration "Aggressive Precision"
     model = lgb.LGBMRegressor(
         objective='regression_l1',
-        n_estimators=5000,
-        learning_rate=0.005,
-        num_leaves=63,
+        n_estimators=8000,          # +est
+        learning_rate=0.001,        # slower
+        num_leaves=20,              # simpler trees to avoid overfitting on smaller train
+        max_depth=5,                # constraint
         random_state=42,
         verbose=-1
     )
@@ -68,10 +77,11 @@ def train_v3():
     
     preds = model.predict(X_te)
     mae = mean_absolute_error(y_te, preds)
-    print(f"MAE sur les 30 derniers jours : {mae:.2f}")
+    print(f"MAE sur Test (Sept-Dec 2025) : {mae:.2f}")
     
-    print(f"Sauvegarde du modele : {MODEL_PATH}")
-    joblib.dump(model, MODEL_PATH)
+    MODEL_PATH_V4 = "models/lightgbm_final_v4_2425.joblib"
+    print(f"Sauvegarde du modele V4 : {MODEL_PATH_V4}")
+    joblib.dump(model, MODEL_PATH_V4)
     
     # Sauvegarder la liste des features pour coherence dashboard
     print("Features utilisees :", X.columns.tolist())
