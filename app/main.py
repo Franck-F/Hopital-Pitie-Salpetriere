@@ -174,6 +174,19 @@ def get_admission_data():
     df['est_weekend'] = df['jour_semaine'].isin([5, 6])
     return df
 
+@st.cache_data
+def get_logistique_data():
+    df_lits = pd.read_csv("data/raw/lits_poles.csv")
+    df_perso = pd.read_csv("data/raw/personnel_poles.csv")
+    df_equip = pd.read_csv("data/raw/equipements_poles.csv")
+    df_stocks = pd.read_csv("data/raw/stocks_medicaments.csv")
+    
+    for df in [df_lits, df_perso, df_equip, df_stocks]:
+        df['date'] = pd.to_datetime(df['date'])
+        
+    df_lits['taux_occupation'] = df_lits['lits_occupes'] / df_lits['lits_totaux']
+    return df_lits, df_perso, df_equip, df_stocks
+
 # --- Landing Logic ---
 if st.session_state.page == 'landing':
     st.markdown("<div class='hero-container'>", unsafe_allow_html=True)
@@ -202,6 +215,7 @@ if st.session_state.page == 'landing':
 
 # --- Dashboard Logic ---
 df_adm = get_admission_data()
+df_lits, df_perso, df_equip, df_stocks = get_logistique_data()
 st.logo(LOGO_PATH, icon_image=LOGO_PATH)
 
 # Sidebar
@@ -363,7 +377,77 @@ with tab_exp:
         st.table(pd.DataFrame(insights_data))
 
     with sub_tab_log:
-        st.info("Intégration des données logistiques (lits, personnel) en cours...")
+        st.markdown("## ANALYSE LOGISTIQUE & RESSOURCES")
+        
+        # --- Overview Stats Logistique ---
+        st.markdown("### Indicateurs de Performance Logistique")
+        l1, l2, l3, l4 = st.columns(4)
+        l1.metric("Occupation Moyenne", f"{df_lits['taux_occupation'].mean():.1%}")
+        l2.metric("Suroccupation (>95%)", f"{(df_lits['taux_occupation'] > 0.95).sum():,}")
+        l3.metric("Absentéisme Moyen", f"{df_perso['taux_absence'].mean():.1%}")
+        l4.metric("Alertes Stocks", f"{df_stocks['alerte_rupture'].sum():,}")
+
+        # --- Lits & Personnel Charts ---
+        st.divider()
+        st.markdown("### Capacité et Effectifs par Service")
+        lc1, lc2 = st.columns(2)
+        
+        with lc1:
+            lits_cap = df_lits.groupby('service')['lits_totaux'].first().sort_values(ascending=False).reset_index()
+            fig_lits = px.bar(lits_cap, x='service', y='lits_totaux', 
+                              title="Capacité Lits par Service", 
+                              template="plotly_dark", color='lits_totaux', color_continuous_scale='Blues')
+            st.plotly_chart(fig_lits, use_container_width=True)
+            
+        with lc2:
+            perso_pivot = df_perso[df_perso['categorie'] != 'total'].groupby(['service', 'categorie'])['effectif_total'].sum().reset_index()
+            fig_perso = px.bar(perso_pivot, x='service', y='effectif_total', color='categorie',
+                               title="Effectifs ETP par Service et Catégorie",
+                               template="plotly_dark")
+            st.plotly_chart(fig_perso, use_container_width=True)
+
+        # --- Occupation & Stocks Charts ---
+        st.divider()
+        st.markdown("### Analyse de l'Occupation et des Stocks")
+        lc3, lc4 = st.columns(2)
+        
+        with lc3:
+            fig_box_occ = px.box(df_lits, x='service', y='taux_occupation',
+                                 title="Dispersion Occupation par Service",
+                                 color='service', template="plotly_dark")
+            st.plotly_chart(fig_box_occ, use_container_width=True)
+            
+        with lc4:
+            ruptures = df_stocks[df_stocks['alerte_rupture']==True]['medicament'].value_counts().head(5).reset_index()
+            fig_rupt = px.bar(ruptures, x='medicament', y='count', 
+                              title="Top 5 Alertes Ruptures Stocks", 
+                              template="plotly_dark", color_discrete_sequence=['crimson'])
+            st.plotly_chart(fig_rupt, use_container_width=True)
+
+        # --- Strategic Monitoring ---
+        st.divider()
+        st.markdown("### Pilotage Stratégique")
+        
+        # Urgences vs Réa (Critiques)
+        critiques = df_lits[df_lits['service'].isin(['Urgences_(Passage_court)', 'PRAGUES_(Réa/Pneumo)'])]
+        daily_max = critiques.groupby('date')['taux_occupation'].max().reset_index()
+        fig_crit = px.line(daily_max, x='date', y='taux_occupation', 
+                           title="Suroccupation Zones Critiques (Urgences + Réa)",
+                           template="plotly_dark", color_discrete_sequence=[ACCENT_RED])
+        fig_crit.add_hline(y=0.95, line_dash="dash", line_color="orange", annotation_text="Seuil 95%")
+        st.plotly_chart(fig_crit, use_container_width=True)
+        
+        # --- Logistique Insights ---
+        st.markdown("#### Diagnostic Logistique")
+        perf_poles = df_lits.groupby('service')['taux_occupation'].agg(['mean','max']).round(2)
+        top_critico = perf_poles.sort_values('max', ascending=False).head(1).index[0]
+        
+        log_insights = [
+            {"Point": "Zones Critiques", "Diagnostic": f"{top_critico} : {perf_poles['max'].max():.0%} PIC MAX atteint", "Niveau": "Critique"},
+            {"Point": "Tension Stocks", "Diagnostic": f"{df_stocks['alerte_rupture'].sum():,} alertes stocks identifiées (80% des jours)", "Niveau": "Elevé"},
+            {"Point": "Effectifs", "Diagnostic": f"Moyenne absentéisme de {df_perso['taux_absence'].mean():.1%}", "Niveau": "Moyen"}
+        ]
+        st.table(pd.DataFrame(log_insights))
     with sub_tab_sej:
         st.info("Intégration des données de séjour (DMS, transitions) en cours...")
 
