@@ -15,13 +15,13 @@ import os
 
 warnings.filterwarnings('ignore')
 
-# --- Page Config ---
+# --- Configuration de la Page ---
 st.set_page_config(
     page_title="Pitie-Salpetriere | Vision 2026",
     layout="wide",
 )
 
-# --- Path Constants ---
+# --- Constantes de Chemins ---
 LOGO_PATH = "app/assets/logo_ps.png"
 HERO_BG_PATH = "app/assets/hero_bg.png"
 DATA_ADMISSION_PATH = "data/raw/admissions_hopital_pitie_2024_2025.csv"
@@ -30,7 +30,7 @@ SECONDARY_BLUE = "#00d2ff"
 ACCENT_RED = "#c8102e"
 BG_DARK = "#0a0c10"
 
-# --- Helper to load image as base64 ---
+# --- Utilitaire pour charger image en base64 ---
 def get_base64_image(path):
     try:
         with open(path, "rb") as image_file:
@@ -40,7 +40,7 @@ def get_base64_image(path):
 
 HERO_BG64 = get_base64_image(HERO_BG_PATH)
 
-# --- Global Styling ---
+# --- Style Global ---
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
@@ -56,7 +56,7 @@ st.markdown(f"""
         background-attachment: fixed;
     }}
 
-    /* Radical Streamlit UI Cleaning - Maintaining Toggle Visibility */
+    /* Nettoyage UI Streamlit Radical - Maintien Visibilite Toggle */
     header[data-testid="stHeader"] {{
         background: rgba(0,0,0,0) !important;
         color: white !important;
@@ -70,7 +70,7 @@ st.markdown(f"""
         padding-top: 2rem !important;
     }}
 
-    /* Responsive adjustments */
+    /* Ajustements Responsifs */
     @media (max-width: 900px) {{
         .hero-container {{
             flex-direction: column !important;
@@ -86,7 +86,7 @@ st.markdown(f"""
         }}
     }}
 
-    /* Global Button Styling */
+    /* Style Global des Boutons */
     .stButton>button {{
         background: linear-gradient(135deg, {PRIMARY_BLUE} 0%, #003d6b 100%);
         color: white !important;
@@ -100,7 +100,7 @@ st.markdown(f"""
         font-size: 0.9rem;
     }}
 
-    /* Landing Page Specific */
+    /* Specifique Page d'Accueil */
     .hero-container {{
         display: flex;
         align-items: center;
@@ -154,7 +154,7 @@ st.markdown(f"""
         margin-bottom: 15px;
     }}
 
-    /* Dashboard Tabs */
+    /* Onglets Dashboard */
     .stTabs [data-baseweb="tab-list"] {{
         gap: 30px;
     }}
@@ -168,19 +168,19 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-# --- Session Management ---
+# --- Gestion de Session ---
 if 'page' not in st.session_state:
     st.session_state.page = 'landing'
 
 def go_to_dashboard():
     st.session_state.page = 'dashboard'
 
-# --- Data Loading (Real Admissions Data) ---
+# --- Chargement des Donnees (Admissions Reelles) ---
 @st.cache_data
 def get_admission_data():
     df = pd.read_csv(DATA_ADMISSION_PATH)
     df['date_entree'] = pd.to_datetime(df['date_entree'])
-    # Extract features for temporal analysis
+    # Extraction features pour analyse temporelle
     df['annee'] = df['date_entree'].dt.year
     df['mois'] = df['date_entree'].dt.month
     df['mois_nom'] = df['date_entree'].dt.month_name()
@@ -209,7 +209,7 @@ def get_patient_sejour_data():
     df_sej = pd.read_csv("data/raw/sejours_pitie_2024.csv", parse_dates=["date_admission", "date_sortie"])
     df_diag = pd.read_csv("data/raw/diagnostics_pitie_2024.csv")
     
-    # Process durations
+    # Calcul des durees
     df_sej['duree_jours'] = (df_sej['date_sortie'] - df_sej['date_admission']).dt.days
     df_sej['mois_adm'] = df_sej['date_admission'].dt.month_name()
     df_sej['jour_adm'] = df_sej['date_admission'].dt.day_name()
@@ -240,26 +240,26 @@ def predict_future_admissions(df_daily, model, days=14):
         next_date = last_date + timedelta(days=i)
         future_dates.append(next_date)
         
-        # Advanced Feature Reconstruction (V6)
+        # Reconstruction Avancee des Features
         row = pd.DataFrame(index=[next_date])
         
-        # Lags
+        # Decalages (Lags)
         for l in [1, 2, 3, 4, 5, 6, 7, 14, 21, 28]:
             row[f'lag{l}'] = current_ts.iloc[-l] if len(current_ts) >= l else current_ts.iloc[-1]
             
-        # Rolling
+        # Moyennes Glissantes
         for w in [3, 7]:
             row[f'roll_{w}'] = current_ts.iloc[-w:].mean() if len(current_ts) >= w else current_ts.iloc[-1]
             
-        # Calendar
+        # Calendrier
         row['day'] = next_date.dayofweek
         row['month'] = next_date.month
         
-        # Seasonal (Cyclic)
+        # Saisonnier (Cyclique)
         row['sin_day'] = np.sin(2 * np.pi * next_date.dayofyear / 365.25)
         row['cos_day'] = np.cos(2 * np.pi * next_date.dayofyear / 365.25)
         
-        # Holiday
+        # Jours Feries
         row['is_holiday'] = 1 if next_date in holidays else 0
         
         FEATS = ['lag1', 'lag2', 'lag3', 'lag4', 'lag5', 'lag6', 'lag7', 'lag14', 'lag21', 'lag28', 
@@ -274,7 +274,7 @@ def predict_future_admissions(df_daily, model, days=14):
     return future_dates, np.array(preds)
 
 def create_features_vectorized(df_ts):
-    # Mirroring Notebook Logic for Evaluation
+    # Miroir de la Logique Notebook pour Evaluation
     df = pd.DataFrame(index=df_ts.index)
     df['admissions'] = df_ts.values
     
@@ -294,7 +294,7 @@ def create_features_vectorized(df_ts):
     df['is_holiday'] = df.index.isin(holidays).astype(int)
     return df.dropna()
 
-# --- Landing Logic ---
+# --- Logique Page d'Accueil ---
 if st.session_state.page == 'landing':
     st.markdown("<div class='hero-container'>", unsafe_allow_html=True)
     col_text, col_visual = st.columns([1.2, 1])
@@ -320,17 +320,17 @@ if st.session_state.page == 'landing':
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- Dashboard Logic ---
+# --- Logique Dashboard ---
 df_adm = get_admission_data()
 df_lits, df_perso, df_equip, df_stocks = get_logistique_data()
 df_pat, df_sej, df_diag = get_patient_sejour_data()
 model_lgbm = load_champion_model()
 
-# Global Time Series (Defined once for all tabs)
+# Serie Temporelle Globale (Definie une fois pour tous les onglets)
 daily_ts = df_adm.groupby('date_entree').size().rename('admissions')
 st.logo(LOGO_PATH, icon_image=LOGO_PATH)
 
-# --- Premium Dashboard Header ---
+# --- En-tete Premium Dashboard ---
 st.markdown(f"""
     <div style='display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 30px; padding-top: 10px;'>
         <h1 style='margin: 0; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #ffffff, {SECONDARY_BLUE}); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>PITIE-SALPETRIERE <span style='font-weight: 300; font-size: 0.8em; color: #8899A6;'>VISION 2024-2025</span></h1>
@@ -344,7 +344,7 @@ with st.sidebar:
     focus = st.selectbox("Focus Intelligence", ["Activité Globale", "Alertes Pics", "Optimisation Services"])
     st.divider()
     
-    # Custom Sidebar Content
+    # Contenu Sidebar Personnalise
     if focus == "Alertes Pics":
         st.error("3 alertes détectées")
         st.info("Pic prévu : Lundi prochain (+15%)")
@@ -383,7 +383,7 @@ with tab_exp:
     with sub_tab_adm:
         st.markdown("## ANALYSE DES ADMISSIONS 2024")
         
-        # --- Overview Stats ---
+        # --- Stats Globales ---
         st.markdown("### Vue d'ensemble des donnees")
         o1, o2, o3, o4 = st.columns(4)
         o1.metric("Periode d'analyse", f"{df_adm['date_entree'].min().strftime('%d/%m/%Y')} -> {df_adm['date_entree'].max().strftime('%d/%m/%Y')}")
@@ -391,7 +391,7 @@ with tab_exp:
         o3.metric("Services/Poles", f"{df_adm['service'].nunique()}")
         o4.metric("Modes d'Entree", f"{df_adm['mode_entree'].nunique()}")
 
-        # --- Admissions Table ---
+        # --- Table Admissions ---
         st.divider()
         st.markdown("### Repartition par Type d'Admission")
         type_counts = df_adm['service'].value_counts().reset_index()
@@ -404,7 +404,7 @@ with tab_exp:
             hide_index=True
         )
 
-        # --- Subplots for Categorical Distributions ---
+        # --- Sous-graphes pour Distributions Categorielles ---
         st.divider()
         st.markdown("### Distributions des Variables Catégorielles")
         
@@ -468,7 +468,7 @@ with tab_exp:
         fig_sun_adm.update_layout(height=700, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_sun_adm, use_container_width=True)
 
-        # --- Week vs Weekend Analysis ---
+        # --- Analyse Semaine vs Weekend ---
         st.divider()
         st.markdown("### Analyse Comparative : Semaine vs Weekend")
         df_adm['est_weekend'] = df_adm['jour_semaine'].isin([5, 6])
@@ -526,7 +526,7 @@ with tab_exp:
         fig_poles_evol.update_layout(height=450, template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_poles_evol, use_container_width=True)
 
-        # --- Final Insights Summary ---
+        # --- Synthese Insights Finaux ---
         st.divider()
         st.markdown("### Synthese Strategique des Admissions")
         
@@ -545,7 +545,7 @@ with tab_exp:
     with sub_tab_log:
         st.markdown("## ANALYSE LOGISTIQUE & RESSOURCES")
         
-        # --- Strategic Metrics ---
+        # --- Metriques Strategiques ---
         st.markdown("### Indicateurs de Tension Critique")
         l1, l2, l3, l4 = st.columns(4)
         l1.metric("Occupation Moyenne", f"{df_lits['taux_occupation'].mean():.1%}")
@@ -553,13 +553,13 @@ with tab_exp:
         l3.metric("Ratio Infirmiers/Lit (Moy)", f"{(df_perso[df_perso['categorie']=='infirmier']['effectif_total'].sum() / df_lits['lits_totaux'].sum()):.2f}")
         l4.metric("Alertes Stocks", f"{df_stocks['alerte_rupture'].sum():,}")
 
-        # --- Capacity vs Staff Panel ---
+        # --- Panneau Capacite vs Effectifs ---
         st.divider()
         st.markdown("### Capacité et Effectifs Soignants")
         lc1, lc2 = st.columns(2)
         
         with lc1:
-            # Capacity with subplots - FIXING PIE IN SUBPLOTS BUG
+            # Capacite avec sous-graphes - CORRECTION BUG PIE SUBPLOTS
             l_fig = make_subplots(
                 rows=2, cols=1, 
                 subplot_titles=("Top 10 Poles (Lits Totaux)", "Repartition par Type de Lit"),
@@ -568,13 +568,13 @@ with tab_exp:
             lits_p = df_lits.groupby('service')['lits_totaux'].first().sort_values(ascending=False).head(10)
             l_fig.add_trace(go.Bar(x=lits_p.index, y=lits_p.values, marker_color='steelblue', name='Lits'), row=1, col=1)
             
-            # Pie for bed types (hypothetical breakdown if data allowed, here using poles as proxy)
+            # Camembert par type de lit (repartition hypothetique ou proxy poles)
             l_fig.add_trace(go.Pie(labels=lits_p.index[:5], values=lits_p.values[:5], hole=0.3), row=2, col=1)
             l_fig.update_layout(height=700, template="plotly_dark", showlegend=False, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(l_fig, use_container_width=True)
             
         with lc2:
-            # Staffing detail
+            # Detail Effectifs
             perso_cat = df_perso[df_perso['categorie'] != 'total'].groupby('categorie')['effectif_total'].sum().reset_index()
             fig_p_cat = px.bar(perso_cat, x='categorie', y='effectif_total', color='categorie',
                                title="Effectifs Totaux par Corps de Metier (ETP)",
@@ -588,7 +588,7 @@ with tab_exp:
         st.markdown("### Focus : Salles d'Isolement & Vigilance Epidemique")
         ic1, ic2 = st.columns(2)
         with ic1:
-            # Load isolation data if available or simulate/proxy from diagnostics
+            # Chargement donnees isolement
             iso_services = ['Urgences_(Passage_court)', 'PRAGUES_(Réa/Pneumo)', 'Infectiologie']
             df_iso = df_lits[df_lits['service'].isin(iso_services)]
             fig_iso = px.line(df_iso, x='date', y='taux_occupation', color='service',
@@ -600,14 +600,14 @@ with tab_exp:
             st.info("Les services identifies ci-contre disposent de chambres a pression negative (Salles d'Isolement). Une occupation depassant 90% sur ces zones declenche le protocole 'Alerte Epidemique'.")
             st.metric("Taux d'Alerte Global (ISO)", f"{(df_iso['taux_occupation'] > 0.9).mean():.1%}")
 
-        # --- Monitoring des Stocks & Ruptures Critiques ---
+        # --- Monitoring Stocks & Ruptures Critiques ---
         st.divider()
         st.markdown("### Gestion des Stocks et Ruptures Critiques")
         sc1, sc2 = st.columns([1, 1.2])
         
         with sc1:
             st.write("Hierarchie des ruptures constatees (Points de vigilance majeurs).")
-            # Data from EDA source
+            # Donnees source EDA
             rupt_data = pd.DataFrame({
                 'Medicament': ['Antibiotiques', 'Morphine IV', 'Insuline', 'Heparine', 'Paracetamol'],
                 'Occurences': [650, 420, 220, 120, 49]
@@ -646,7 +646,7 @@ with tab_exp:
     with sub_tab_sej:
         st.markdown("## ANALYSE DES SEJOURS & PARCOURS PATIENTS")
         
-        # --- 1. Dataset Preview (Styled Tables) ---
+        # --- 1. Apercu Dataset (Tables Stylees) ---
         st.markdown("### Apercu des Jeux de Donnees 2024")
         
         def create_styled_table_st(df):
@@ -666,7 +666,7 @@ with tab_exp:
             st.markdown("#### Table Diagnostics")
             st.dataframe(create_styled_table_st(df_diag), use_container_width=True)
 
-        # --- 2. Data Quality & Overview ---
+        # --- 2. Qualite Donnees & Vue d'ensemble ---
         st.divider()
         st.markdown("### Qualite et Profil Demographique")
         q1, q2, q3 = st.columns(3)
@@ -695,7 +695,7 @@ with tab_exp:
             fig_age_sej.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_age_sej, use_container_width=True)
 
-        # --- New : Boxplot Detail Age par Type ---
+        # --- Nouveau : Boxplot Detail Age par Type ---
         st.divider()
         st.markdown("### Dispersion Detaillee de l'Age par Type d'Hospitalisation")
         fig_box_notched = px.box(df_sej, x="type_hospit", y="age", color="type_hospit",
@@ -705,12 +705,12 @@ with tab_exp:
         fig_box_notched.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False)
         st.plotly_chart(fig_box_notched, use_container_width=True)
 
-        # --- 3. Specialty Analysis & Repartition Age ---
+        # --- 3. Analyse Specialites & Repartition Age ---
         st.divider()
         st.markdown("### Hierarchie et Structure Demographique des Poles")
         sc1, sc2 = st.columns(2)
         with sc1:
-            fig_sun_sej = px.sunburst(df_sej, path=['pole', 'type_hospit'], values='age', # Proxy count
+            fig_sun_sej = px.sunburst(df_sej, path=['pole', 'type_hospit'], values='age', # Proxy volume
                                   title="Poles -> Types d'Hospitalisation",
                                   template="plotly_dark", color_discrete_sequence=px.colors.qualitative.Pastel)
             fig_sun_sej.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
@@ -719,23 +719,23 @@ with tab_exp:
             st.write("Exploration des structures de soins par pole. Le sunburst permet de visualiser l'imbrication des types d'hospitalisation au sein des unites medicales.")
             st.info("Utilisez le clic pour zoomer sur un pole specifique et voir le detail des sejours.")
 
-        # --- New : Repartition Ages par Pole (Full Width & Sorted) ---
+        # --- Nouveau : Repartition Ages par Pole (Pleine Largeur & Trie) ---
         st.divider()
         st.markdown("### Répartition des Âges par Pôle")
         df_sej['age_bin'] = pd.cut(df_sej['age'], bins=[0, 18, 45, 65, 105], labels=['Enfants', 'Adultes', 'Seniors', 'Grand Age'])
         
-        # Calculate volume for sorting
+        # Calcul volume pour tri
         pole_order = df_sej['pole'].value_counts().index.tolist()
         age_pole = df_sej.groupby(['pole', 'age_bin']).size().reset_index(name='count')
         
         fig_age_pole = px.bar(age_pole, x="count", y="pole", color="age_bin", orientation='h',
-                              category_orders={"pole": pole_order[::-1]}, # Big at top
+                               category_orders={"pole": pole_order[::-1]}, # Gros volumes en haut
                               title="Structure Demographique des Admissions par Pole",
                               template="plotly_dark", color_discrete_sequence=px.colors.sequential.RdBu_r)
         fig_age_pole.update_layout(height=600, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", legend_title="Tranche d'age")
         st.plotly_chart(fig_age_pole, use_container_width=True)
 
-        # --- 4. Diagnostics Analysis ---
+        # --- 4. Analyse Diagnostics ---
         st.divider()
         st.markdown("### Analyse des Pathologies (CIM-10)")
         dg1, dg2 = st.columns(2)
@@ -747,7 +747,7 @@ with tab_exp:
             fig_p_p.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_p_p, use_container_width=True)
         with dg2:
-            # Donut for Diagnostic Type
+            # Donut par Type Diagnostic
             repartition = df_diag["type_diagnostic"].value_counts().reset_index()
             repartition.columns = ["type", "count"]
             fig_donut = px.pie(repartition, values="count", names="type", hole=0.5,
@@ -757,11 +757,11 @@ with tab_exp:
             fig_donut.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_donut, use_container_width=True)
 
-        # --- 5. Age vs Duration Correlation ---
+        # --- 5. Correlation Age vs Duree ---
         st.divider()
         st.markdown("### Analyse de Corrélation : Age vs Durée de Séjour")
         
-        # Taking a representative sample for the scatter plot
+        # Echantillon representatif pour scatter plot
         sample_size = min(500, len(df_sej))
         sample_sej = df_sej.sample(n=sample_size, random_state=42)
         
@@ -773,18 +773,18 @@ with tab_exp:
         fig_scatter.update_layout(height=500, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_scatter, use_container_width=True)
 
-        # --- 6. Multidimensional Pole Profiling (Radar) ---
+        # --- 6. Profiling Poles Multidimensionnel (Radar) ---
         st.divider()
         st.markdown("### Profiling Multidimensionnel des Poles (Radar)")
         
-        # Prepare radar data
+        # Preparation donnees radar
         radar_raw = df_sej.groupby('pole').agg({
             'age': 'mean',
             'duree_jours': 'mean',
             'id_sejour': 'count'
         }).reset_index()
         
-        # Normalize for radar visualization (Scale 0-1)
+        # Normalisation pour visualisation radar (Echelle 0-1)
         for col in ['age', 'duree_jours', 'id_sejour']:
             radar_raw[f'{col}_norm'] = radar_raw[col] / radar_raw[col].max()
             
@@ -811,7 +811,7 @@ with tab_exp:
         
         qc1, qc2 = st.columns([2, 1])
         with qc1:
-            # New : Hourly Tension Heatmap
+            # Nouveau : Heatmap Tension Horaire
             df_sej['heure'] = df_sej['date_admission'].dt.hour
             tension_h = df_sej.groupby(['jour_adm', 'heure']).size().reset_index(name='nb_admissions')
             jours_ordre = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -827,7 +827,7 @@ with tab_exp:
             st.info("Cette heatmap permet d'identifier les pics d'activite journaliers. Une concentration rouge indique un flux critique necessitant un renfort des effectifs d'accueil et de tri.")
             st.metric("Heure de Pointe (Moyenne)", f"{df_sej['heure'].mode()[0]}h00")
         
-        # --- Final Insights Séjour ---
+        # --- Insights Finaux Sejour ---
         st.divider()
         st.markdown("### Synthese des Parcours Patients")
         dms = df_sej['duree_jours'].mean()
@@ -846,10 +846,10 @@ with tab_ml:
     st.markdown("Moteur predictif **LightGBM Champion** (Performance Maximale).")
     
     if model_lgbm:
-        # 1. Evaluation Historique (Matching Notebook)
+        # 1. Evaluation Historique (Identique Notebook)
         daily_series_ml = daily_ts.asfreq('D', fill_value=0)
         
-        # Prepare Data for Eval
+        # Preparation Donnees pour Eval
         full_df_feat = create_features_vectorized(daily_series_ml)
         mask_eval = (full_df_feat.index >= '2025-09-01') & (full_df_feat.index <= '2025-12-31')
         X_eval = full_df_feat.loc[mask_eval].drop(columns=['admissions'])
@@ -857,7 +857,7 @@ with tab_ml:
         
         y_pred_eval = model_lgbm.predict(X_eval)
         
-        # Metrics Calculation
+        # Calcul Metriques
         mae = mean_absolute_error(y_eval, y_pred_eval)
         rmse = np.sqrt(mean_squared_error(y_eval, y_pred_eval))
         r2 = r2_score(y_eval, y_pred_eval)
@@ -882,7 +882,7 @@ with tab_ml:
 
         st.divider()
 
-        # 2. Future Projection
+        # 2. Projection Future
         st.markdown("### Projections Futures")
         daily_series_ml = daily_ts.asfreq('D', fill_value=0)
         future_dates, future_preds = predict_future_admissions(daily_series_ml, model_lgbm)
@@ -947,20 +947,20 @@ with tab_sim:
             _, future_preds = predict_future_admissions(daily_series_sim, model_lgbm)
             avg_predicted = future_preds.mean()
             
-            # Stress calculation
+            # Calcul stress
             stress_load = avg_predicted * (1 + intensite/100)
             
-            # Initialize metrics
+            # Initialisation metriques
             utilization = 0.0
             depletion_days = 30.0
             fig_sim = None
             
-            # Display Metrics Baseline
+            # Affichage Metriques Baseline
             m_col1, m_col2, m_col3 = st.columns(3)
             m_col1.metric("Baseline Modèle", f"{avg_predicted:.1f}/j")
             m_col2.metric("Charge Simulée", f"{stress_load:.1f}/j", delta=f"+{intensite}%", delta_color="inverse")
             
-            # Data Unpacking & Real-time Filtering
+            # Decompactage & Filtrage Temps Reel
             df_lits_raw, df_perso_raw, _, df_stocks_raw = get_logistique_data()
             latest_date = df_perso_raw['date'].max()
             
@@ -968,9 +968,9 @@ with tab_sim:
             df_perso = df_perso_raw[df_perso_raw['date'] == latest_date]
             df_stocks = df_stocks_raw[df_stocks_raw['date'] == latest_date]
             
-            # Resource Logic
+            # Logique Ressources
             if "Lits" in ressource_type:
-                # Use top 10 poles by capacity for the snapshot
+                # Top 10 poles par capacite pour l'instantanné
                 total_capacity = df_lits.nlargest(10, 'lits_totaux')['lits_totaux'].sum()
                 occup_base = df_lits.nlargest(10, 'lits_totaux')['lits_occupes'].sum()
                 utilization = (occup_base / total_capacity) * (1 + intensite/200)
@@ -991,7 +991,7 @@ with tab_sim:
                 ))
             elif "Effectif" in ressource_type:
                 total_staff = df_perso['effectif_total'].sum()
-                # Realistic tension: (Simulated new patients * factor) / available staff
+                # Tension realiste: (Nouveaux patients simules * facteur) / effectif dispo
                 utilization = (stress_load * 0.8) / (total_staff / 20) 
                 m_col3.metric("Tension Staff", f"{min(utilization*100, 100):.1f}%")
                 
@@ -999,12 +999,12 @@ with tab_sim:
                                 x='categorie', y='effectif_total', title=f"Effectifs Réels au {latest_date.strftime('%d/%m/%Y')}",
                                 template="plotly_dark", color_discrete_sequence=[SECONDARY_BLUE])
             else:
-                # Stock Logic
+                # Logique Stocks
                 depletion_days = 30 / (1 + intensite/100)
                 m_col3.metric("Autonomie Stocks", f"{depletion_days:.1f} Jours")
                 
                 if not df_stocks_raw.empty:
-                    # For line chart, we use historical data but filter Top 5 meds
+                    # Pour line chart, usage historique mais filtrage Top 5 medicaments
                     df_viz = df_stocks_raw.copy()
                     top_meds = df_viz[df_viz['date'] == latest_date].nlargest(5, 'conso_jour')['medicament'].tolist()
                     df_viz = df_viz[df_viz['medicament'].isin(top_meds)].sort_values('date')
@@ -1018,7 +1018,7 @@ with tab_sim:
                 fig_sim.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
                 st.plotly_chart(fig_sim, use_container_width=True)
             
-            # Final Status Message
+            # Message Status Final
             is_critical = False
             if "Lits" in ressource_type or "Effectif" in ressource_type:
                 if utilization > 0.9: is_critical = True
