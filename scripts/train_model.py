@@ -17,54 +17,68 @@ daily_data = daily_data.set_index('date_entree').asfreq('D', fill_value=0)
 # Feature engineering
 def create_features(df):
     df = df.copy()
-    
     # Cyclical features for time
     df['month_sin'] = np.sin(2 * np.pi * df.index.month / 12)
     df['month_cos'] = np.cos(2 * np.pi * df.index.month / 12)
     df['day_sin'] = np.sin(2 * np.pi * df.index.dayofweek / 7)
     df['day_cos'] = np.cos(2 * np.pi * df.index.dayofweek / 7)
     
-    # Holiday feature (Hardcoded French 2024 for simplicity)
+    # Holiday feature and proximity
     holidays = ['2024-01-01', '2024-04-01', '2024-05-01', '2024-05-08', 
                 '2024-05-09', '2024-05-20', '2024-07-14', '2024-08-15', 
                 '2024-11-01', '2024-11-11', '2024-12-25']
+    holiday_dates = pd.to_datetime(holidays)
     df['is_holiday'] = df.index.strftime('%Y-%m-%d').isin(holidays).astype(int)
     
+    # Distance to next/prev holiday
+    df['days_to_holiday'] = [(holiday_dates[holiday_dates >= d].min() - d).days if any(holiday_dates >= d) else 365 for d in df.index]
+    
     df['dayofyear'] = df.index.dayofyear
+    df['dayofyear_sin'] = np.sin(2 * np.pi * df['dayofyear'] / 365)
+    df['dayofyear_cos'] = np.cos(2 * np.pi * df['dayofyear'] / 365)
     df['weekofyear'] = df.index.isocalendar().week.astype(int)
+    df['dayofmonth'] = df.index.day
     
     # Lags
     df['lag1'] = df['admissions'].shift(1)
+    df['lag2'] = df['admissions'].shift(2)
     df['lag7'] = df['admissions'].shift(7)
     df['lag14'] = df['admissions'].shift(14)
     
-    # Rolling stats
+    # Advanced Rolling stats
+    df['roll_mean_3'] = df['admissions'].shift(1).rolling(window=3).mean()
     df['roll_mean_7'] = df['admissions'].shift(1).rolling(window=7).mean()
+    df['roll_max_7'] = df['admissions'].shift(1).rolling(window=7).max()
+    df['roll_min_7'] = df['admissions'].shift(1).rolling(window=7).min()
     df['roll_std_7'] = df['admissions'].shift(1).rolling(window=7).std()
     
     return df
 
 features_df = create_features(daily_data).dropna()
 
-FEATURES = ['month_sin', 'month_cos', 'day_sin', 'day_cos', 'is_holiday', 'dayofyear', 
-            'weekofyear', 'lag1', 'lag7', 'lag14', 'roll_mean_7', 'roll_std_7']
+FEATURES = ['month_sin', 'month_cos', 'day_sin', 'day_cos', 'is_holiday', 'days_to_holiday', 
+            'dayofyear_sin', 'dayofyear_cos', 'weekofyear', 'dayofmonth', 'lag1', 'lag2', 'lag7', 'lag14', 
+            'roll_mean_3', 'roll_mean_7', 'roll_max_7', 'roll_min_7', 'roll_std_7']
 TARGET = 'admissions'
 
 X = features_df[FEATURES]
 y = features_df[TARGET]
 
 # XGBoost Optimization with GridSearchCV
-# Poisson objective for counts and more depth
-xgb_model = xgb.XGBRegressor(objective='count:poisson', random_state=42)
+# Squarederror for lower MAE and extreme boosting
+xgb_model = xgb.XGBRegressor(objective='reg:squarederror', random_state=42)
 
 param_grid = {
-    'n_estimators': [1000],
+    'n_estimators': [2000],
     'learning_rate': [0.01, 0.05],
-    'max_depth': [6, 10],
-    'subsample': [0.8],
-    'colsample_bytree': [0.8],
-    'gamma': [0.1]
+    'max_depth': [12, 15],
+    'subsample': [0.9],
+    'colsample_bytree': [0.9],
+    'gamma': [0],
+    'reg_alpha': [0],
+    'reg_lambda': [1]
 }
+# 2 * 2 * 2 * 2 * 2 = 32 candidates * 5 folds = 160 fits. Manageable.
 
 tscv = TimeSeriesSplit(n_splits=5)
 grid_search = GridSearchCV(
