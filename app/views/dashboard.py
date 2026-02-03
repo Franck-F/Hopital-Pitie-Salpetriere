@@ -54,8 +54,9 @@ def show_dashboard():
             
     # --- Tabs Layout ---
     tab_acc, tab_exp, tab_ml, tab_sim, tab_tea = st.tabs([
-        "TABLEAU DE BORD", "EXPLORATION DATA", "PREVISIONS ML", "SIMULATEUR", "EQUIPE PROJET"
+        "TABLEAU DE BORD", "EXPLORATION DATA", "PREVISIONS ML", "SIMULATEUR", "EQUIPE"
     ])
+
     
     with tab_acc:
         render_overview(df_adm, daily_ts)
