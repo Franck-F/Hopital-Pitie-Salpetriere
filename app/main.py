@@ -717,14 +717,24 @@ with tab_exp:
             fig_sun_sej.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_sun_sej, use_container_width=True)
         with sc2:
-            # New : Repartition Ages par Pole
-            df_sej['age_bin'] = pd.cut(df_sej['age'], bins=[0, 18, 45, 65, 105], labels=['Enfants', 'Adultes', 'Seniors', 'Grand Age'])
-            age_pole = df_sej.groupby(['pole', 'age_bin']).size().reset_index(name='count')
-            fig_age_pole = px.bar(age_pole, x="count", y="pole", color="age_bin", orientation='h',
-                                  title="Repartition des Ages par Pole",
-                                  template="plotly_dark", color_discrete_sequence=px.colors.sequential.RdBu_r)
-            fig_age_pole.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", legend_title="Tranche d'age")
-            st.plotly_chart(fig_age_pole, use_container_width=True)
+            st.write("Exploration des structures de soins par pole. Le sunburst permet de visualiser l'imbrication des types d'hospitalisation au sein des unites medicales.")
+            st.info("Utilisez le clic pour zoomer sur un pole specifique et voir le detail des sejours.")
+
+        # --- New : Repartition Ages par Pole (Full Width & Sorted) ---
+        st.divider()
+        st.markdown("### Répartition des Âges par Pôle")
+        df_sej['age_bin'] = pd.cut(df_sej['age'], bins=[0, 18, 45, 65, 105], labels=['Enfants', 'Adultes', 'Seniors', 'Grand Age'])
+        
+        # Calculate volume for sorting
+        pole_order = df_sej['pole'].value_counts().index.tolist()
+        age_pole = df_sej.groupby(['pole', 'age_bin']).size().reset_index(name='count')
+        
+        fig_age_pole = px.bar(age_pole, x="count", y="pole", color="age_bin", orientation='h',
+                              category_orders={"pole": pole_order[::-1]}, # Big at top
+                              title="Structure Demographique des Admissions par Pole",
+                              template="plotly_dark", color_discrete_sequence=px.colors.sequential.RdBu_r)
+        fig_age_pole.update_layout(height=600, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", legend_title="Tranche d'age")
+        st.plotly_chart(fig_age_pole, use_container_width=True)
 
         # --- 4. Diagnostics Analysis ---
         st.divider()
