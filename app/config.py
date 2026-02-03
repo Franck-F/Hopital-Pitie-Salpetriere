@@ -69,7 +69,7 @@ def get_global_style():
     .stButton>button {{
         background: linear-gradient(135deg, {PRIMARY_BLUE} 0%, #003d6b 100%);
         color: white !important;
-        border-radius: 50px;
+        border-radius: 25px;
         padding: 12px 40px;
         border: 1px solid rgba(255,255,255,0.1);
         font-weight: 600;
