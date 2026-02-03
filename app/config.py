@@ -19,7 +19,8 @@ def setup_page_config():
     )
 
 # --- Style Global ---
-GLOBAL_STYLE = f"""
+def get_global_style():
+    return f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
 
@@ -147,4 +148,5 @@ GLOBAL_STYLE = f"""
 """
 
 def apply_global_style():
-    st.markdown(GLOBAL_STYLE, unsafe_allow_html=True)
+    st.markdown(get_global_style(), unsafe_allow_html=True)
+
