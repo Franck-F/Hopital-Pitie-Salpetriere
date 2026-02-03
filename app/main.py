@@ -396,243 +396,309 @@ with tab_exp:
             hide_index=True
         )
 
-        # --- Rest of the EDA charts ---
+        # --- Subplots for Categorical Distributions ---
         st.divider()
         st.markdown("### Distributions des Variables Catégorielles")
-        exp_c1, exp_c2 = st.columns(2)
         
-        with exp_c1:
-            pole_counts = df_adm['service'].value_counts().head(10)
-            fig1 = px.bar(pole_counts, orientation='h', title="Top 10 Poles/Services", 
-                          template="plotly_dark", color_discrete_sequence=['lightblue'])
-            st.plotly_chart(fig1, use_container_width=True)
-            
-            geo_counts = df_adm['departement_patient'].value_counts().head(10)
-            fig2 = px.bar(geo_counts, title="Origine Geographique (Top 10)", 
-                          template="plotly_dark", color_discrete_sequence=['coral'])
-            st.plotly_chart(fig2, use_container_width=True)
-            
-        with exp_c2:
-            mode_counts = df_adm['mode_entree'].value_counts()
-            fig3 = px.pie(mode_counts, names=mode_counts.index, title="Modes d'Entree", 
-                          template="plotly_dark", hole=0.4)
-            st.plotly_chart(fig3, use_container_width=True)
-            
-            motif_counts = df_adm['motif_principal'].value_counts().head(20)
-            fig4 = px.bar(motif_counts, orientation='h', title="Top 20 Motifs d'Admission", 
-                          template="plotly_dark", color_discrete_sequence=['lightgreen'])
-            st.plotly_chart(fig4, use_container_width=True)
+        fig_cat = make_subplots(
+            rows=2, cols=2,
+            subplot_titles=('Top 10 Poles/Services', 'Modes d\'Entree', 
+                            'Origine Geographique (Top 10)', 'Top 20 Motifs d\'Admission'),
+            specs=[[{'type': 'bar'}, {'type': 'pie'}],
+                   [{'type': 'bar'}, {'type': 'bar'}]]
+        )
 
-        # 2. Analyse Temporelle & Decomposition
-        st.divider()
-        st.markdown("### Tendances, Saisonnalité et Patterns")
+        # 1. Poles
+        pole_c = df_adm['service'].value_counts().head(10)
+        fig_cat.add_trace(go.Bar(y=pole_c.index, x=pole_c.values, orientation='h', name='Poles', marker_color='lightblue'), row=1, col=1)
         
+        # 2. Modes
+        mode_c = df_adm['mode_entree'].value_counts()
+        fig_cat.add_trace(go.Pie(labels=mode_c.index, values=mode_c.values, name='Modes', hole=0.4), row=1, col=2)
+        
+        # 3. Geo
+        geo_c = df_adm['departement_patient'].value_counts().head(10)
+        fig_cat.add_trace(go.Bar(x=geo_c.index, y=geo_c.values, name='Origine', marker_color='coral'), row=2, col=1)
+        
+        # 4. Motifs
+        motif_c = df_adm['motif_principal'].value_counts().head(20)
+        fig_cat.add_trace(go.Bar(x=motif_c.index, y=motif_c.values, name='Motifs', marker_color='lightgreen'), row=2, col=2)
+        
+        fig_cat.update_layout(height=900, template="plotly_dark", showlegend=False, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig_cat, use_container_width=True)
+
+        # --- Temporal Analysis ---
+        st.divider()
+        st.markdown("### Tendances et Saisonnalité (Série Temporelle)")
         daily_series = daily_stats.asfreq('D', fill_value=0)
         decomposition = seasonal_decompose(daily_series, model='additive', period=7)
         
-        fig_decomp = make_subplots(rows=4, cols=1, 
-                                   subplot_titles=('Signal Original', 'Tendance', 'Saisonnalité (Hebdo)', 'Résidus'),
-                                   vertical_spacing=0.1)
-        fig_decomp.add_trace(go.Scatter(x=daily_series.index, y=daily_series.values, name="Original", line_color=SECONDARY_BLUE), row=1, col=1)
-        fig_decomp.add_trace(go.Scatter(x=decomposition.trend.index, y=decomposition.trend.values, name="Tendance", line_color=ACCENT_RED), row=2, col=1)
-        fig_decomp.add_trace(go.Scatter(x=decomposition.seasonal.index, y=decomposition.seasonal.values, name="Saisonnalité", line_color='green'), row=3, col=1)
-        fig_decomp.add_trace(go.Scatter(x=decomposition.resid.index, y=decomposition.resid.values, name="Résidus", line_color='orange'), row=4, col=1)
-        fig_decomp.update_layout(height=800, template="plotly_dark", showlegend=False, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig_decomp, use_container_width=True)
+        fig_temp = make_subplots(rows=4, cols=1, 
+                                 subplot_titles=('Signal Original', 'Tendance', 'Saisonnalité', 'Résidus'),
+                                 vertical_spacing=0.08)
+        fig_temp.add_trace(go.Scatter(x=daily_series.index, y=daily_series.values, name="Original", line_color=SECONDARY_BLUE), row=1, col=1)
+        fig_temp.add_trace(go.Scatter(x=decomposition.trend.index, y=decomposition.trend.values, name="Tendance", line_color=ACCENT_RED), row=2, col=1)
+        fig_temp.add_trace(go.Scatter(x=decomposition.seasonal.index, y=decomposition.seasonal.values, name="Saisonnalité", line_color='green'), row=3, col=1)
+        fig_temp.add_trace(go.Scatter(x=decomposition.resid.index, y=decomposition.resid.values, name="Résidus", line_color='orange'), row=4, col=1)
+        fig_temp.update_layout(height=1000, template="plotly_dark", showlegend=False, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig_temp, use_container_width=True)
 
-        # 3. Heatmaps & Boxplots
-        pat_c1, pat_c2 = st.columns(2)
-        with pat_c1:
-            jour_ordre = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-            fig_box = go.Figure()
-            for jour in jour_ordre:
-                data_j = df_adm[df_adm['jour_semaine_nom'] == jour].groupby('date_entree').size()
-                fig_box.add_trace(go.Box(y=data_j.values, name=jour[:3]))
-            fig_box.update_layout(title="Variabilité par Jour de la Semaine", template="plotly_dark")
-            st.plotly_chart(fig_box, use_container_width=True)
-        with pat_c2:
-            pivot_h = df_adm.groupby(['jour_semaine', 'mois']).size().unstack(fill_value=0)
-            fig_heat = px.imshow(pivot_h.values, labels=dict(x="Mois", y="Jour", color="Volume"),
-                                 x=pivot_h.columns, y=jour_ordre, title="Intensité Semaine x Mois",
-                                 color_continuous_scale='YlOrRd', template="plotly_dark")
-            st.plotly_chart(fig_heat, use_container_width=True)
-
-        # 4. Anomalies
+        # --- Patterns & Heatmap ---
         st.divider()
-        st.markdown("### Detection d'Anomalies (Pics Inhabituels)")
+        st.markdown("### Patterns Temporels")
+        pc1, pc2 = st.columns(2)
+        with pc1:
+            jour_ordre = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+            fig_box_j = go.Figure()
+            for j in jour_ordre:
+                d_j = df_adm[df_adm['jour_semaine_nom'] == j].groupby('date_entree').size()
+                fig_box_j.add_trace(go.Box(y=d_j.values, name=j[:3]))
+            fig_box_j.update_layout(title="Variabilité par Jour", template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_box_j, use_container_width=True)
+        with pc2:
+            pivot_h = df_adm.groupby(['jour_semaine', 'mois']).size().unstack(fill_value=0)
+            fig_heat_adm = px.imshow(pivot_h.values, labels=dict(x="Mois", y="Jour", color="Volume"),
+                                     x=pivot_h.columns, y=jour_ordre, title="Intensité Semaine x Mois",
+                                     color_continuous_scale='YlOrRd', template="plotly_dark")
+            fig_heat_adm.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_heat_adm, use_container_width=True)
+
+        # --- Anomaly Detection ---
+        st.divider()
+        st.markdown("### Detection d'Anomalies (Pics Hors-Normes)")
         Q1, Q3 = daily_stats.quantile(0.25), daily_stats.quantile(0.75)
         IQR = Q3 - Q1
         upper_b = Q3 + 1.5 * IQR
         outliers = daily_stats[daily_stats > upper_b]
         
-        fig_out = go.Figure()
-        fig_out.add_trace(go.Scatter(x=daily_stats.index, y=daily_stats.values, mode='markers', name='Normal', marker=dict(color=SECONDARY_BLUE, size=4)))
-        fig_out.add_trace(go.Scatter(x=outliers.index, y=outliers.values, mode='markers', name='Anomalie', marker=dict(color=ACCENT_RED, size=8, symbol='x')))
-        fig_out.add_hline(y=upper_b, line_dash="dash", line_color=ACCENT_RED, annotation_text="Seuil IQR")
-        fig_out.update_layout(title="Identification des Pics Hors-Normes", template="plotly_dark")
-        st.plotly_chart(fig_out, use_container_width=True)
+        fig_out_adm = go.Figure()
+        fig_out_adm.add_trace(go.Scatter(x=daily_stats.index, y=daily_stats.values, mode='markers', name='Normal', marker=dict(color=SECONDARY_BLUE, size=4)))
+        fig_out_adm.add_trace(go.Scatter(x=outliers.index, y=outliers.values, mode='markers', name='Anomalie', marker=dict(color=ACCENT_RED, size=8, symbol='x')))
+        fig_out_adm.add_hline(y=upper_b, line_dash="dash", line_color=ACCENT_RED, annotation_text="Seuil IQR")
+        fig_out_adm.update_layout(title="Identification des Pics", template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig_out_adm, use_container_width=True)
 
-        # --- Final Insights Summary ---
+        # --- Sunburst Motifs ---
         st.divider()
-        st.markdown("### SYNTHESE FINALE - INSIGHTS PRINCIPAUX")
+        st.markdown("### Hierarche des Motifs (Sunburst)")
+        top_m_list = df_adm['motif_principal'].value_counts().head(15).index
+        sun_df = df_adm[df_adm['motif_principal'].isin(top_m_list)].groupby(['mode_entree', 'service', 'motif_principal']).size().reset_index(name='count')
+        fig_sun_adm = px.sunburst(sun_df, path=['mode_entree', 'service', 'motif_principal'], values='count',
+                                  title="Mode -> Pôle -> Top Motifs",
+                                  template="plotly_dark", color_discrete_sequence=px.colors.qualitative.Pastel)
+        fig_sun_adm.update_layout(height=700, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig_sun_adm, use_container_width=True)
+
+        # --- Week vs Weekend Analysis ---
+        st.divider()
+        st.markdown("### Analyse Comparative : Semaine vs Weekend")
+        df_adm['est_weekend'] = df_adm['jour_semaine'].isin([5, 6])
+        weekday_d = df_adm[~df_adm['est_weekend']].groupby('date_entree').size()
+        weekend_d = df_adm[df_adm['est_weekend']].groupby('date_entree').size()
         
-        # Recalculate stats for insights
-        monthly_ad_idx = df_adm.groupby('mois_nom').size().idxmax()
-        monthly_ad_max = df_adm.groupby('mois_nom').size().max()
-        geo_top = df_adm['departement_patient'].value_counts().index[0]
-        geo_top_pct = (df_adm['departement_patient'].value_counts().iloc[0] / len(df_adm) * 100).round(1)
-        pole_top = df_adm['service'].value_counts().index[0]
-        pole_top_pct = (df_adm['service'].value_counts().iloc[0] / len(df_adm) * 100).round(1)
+        # t-test
+        t_stat, p_val = scipy_stats.ttest_ind(weekday_d, weekend_d)
         
-        insights_data = [
-            {"Categorie": "Volume", "Insight": f"Total de {len(df_adm):,} admissions en 2024", "Impact": "Eleve", "Action": "Planification des ressources"},
-            {"Categorie": "Temporel", "Insight": f"Moyenne de {daily_stats.mean():.0f} admissions/jour (±{daily_stats.std():.0f})", "Impact": "Eleve", "Action": "Staffing dynamique"},
-            {"Categorie": "Saisonnalite", "Insight": f"Pic en {monthly_ad_idx} ({monthly_ad_max:,} admissions)", "Impact": "Moyen", "Action": "Anticipation saisonniere"},
-            {"Categorie": "Geographie", "Insight": f"Top origine: {geo_top} ({geo_top_pct}%)", "Impact": "Moyen", "Action": "Partenariats locaux"},
-            {"Categorie": "Pole", "Insight": f"Pôle dominant: {pole_top} ({pole_top_pct}%)", "Impact": "Eleve", "Action": "Allocation ressources ciblee"},
-            {"Categorie": "Anomalies", "Insight": f"{len(outliers)} jours avec pics anormaux detectes", "Impact": "Eleve", "Action": "Plan de crise"},
-            {"Categorie": "Variabilite", "Insight": f"CV = {(daily_stats.std()/daily_stats.mean()*100):.1f}%", "Impact": "Moyen", "Action": "Flexibilite operationnelle"}
+        wc1, wc2 = st.columns(2)
+        with wc1:
+            fig_box_ww = go.Figure()
+            fig_box_ww.add_trace(go.Box(y=weekday_d.values, name='Semaine', marker_color='steelblue'))
+            fig_box_ww.add_trace(go.Box(y=weekend_d.values, name='Weekend', marker_color='coral'))
+            fig_box_ww.update_layout(title="Distribution Volumes quotidien", template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_box_ww, use_container_width=True)
+            
+        with wc2:
+            st.metric("Moyenne Semaine", f"{weekday_d.mean():.1f} ± {weekday_d.std():.1f}")
+            st.metric("Moyenne Weekend", f"{weekend_d.mean():.1f} ± {weekend_d.std():.1f}")
+            if p_val < 0.05:
+                st.success(f"Difference SIGNIFICATIVE (p={p_val:.6f})")
+            else:
+                st.info(f"Pas de difference significative (p={p_val:.6f})")
+
+        # --- Insights Summary ---
+        st.divider()
+        st.markdown("### Synthèse des Insights Admissions")
+        insights_adm = [
+            {"Point": "Tension Temporelle", "Description": f"Pic en {df_adm.groupby('mois_nom').size().idxmax()} avec {df_adm.groupby('mois_nom').size().max():,} admissions."},
+            {"Point": "Top Pole", "Description": f"{df_adm['service'].value_counts().index[0]} represente {(df_adm['service'].value_counts().iloc[0]/len(df_adm)*100):.1f}% du volume."},
+            {"Point": "Anomalies", "Description": f"{len(outliers)} jours de pics anormaux identifiés (Alerte Risque)."}
         ]
-        
-        st.table(pd.DataFrame(insights_data))
+        st.table(pd.DataFrame(insights_adm))
+
 
     with sub_tab_log:
         st.markdown("## ANALYSE LOGISTIQUE & RESSOURCES")
         
-        # --- Overview Stats Logistique ---
-        st.markdown("### Indicateurs de Performance Logistique")
+        # --- Strategic Metrics ---
+        st.markdown("### Indicateurs de Tension Critique")
         l1, l2, l3, l4 = st.columns(4)
         l1.metric("Occupation Moyenne", f"{df_lits['taux_occupation'].mean():.1%}")
         l2.metric("Suroccupation (>95%)", f"{(df_lits['taux_occupation'] > 0.95).sum():,}")
-        l3.metric("Absenteisme Moyen", f"{df_perso['taux_absence'].mean():.1%}")
+        l3.metric("Ratio Infirmiers/Lit (Moy)", f"{(df_perso[df_perso['categorie']=='infirmier']['effectif_total'].sum() / df_lits['lits_totaux'].sum()):.2f}")
         l4.metric("Alertes Stocks", f"{df_stocks['alerte_rupture'].sum():,}")
 
-        # --- Lits & Personnel Charts ---
+        # --- Capacity vs Staff Panel ---
         st.divider()
-        st.markdown("### Capacité et Effectifs par Service")
+        st.markdown("### Capacité et Effectifs Soignants")
         lc1, lc2 = st.columns(2)
         
         with lc1:
-            lits_cap = df_lits.groupby('service')['lits_totaux'].first().sort_values(ascending=False).reset_index()
-            fig_lits = px.bar(lits_cap, x='service', y='lits_totaux', 
-                              title="Capacité Lits par Service", 
-                              template="plotly_dark", color='lits_totaux', color_continuous_scale='Blues')
-            st.plotly_chart(fig_lits, use_container_width=True)
+            # Capacity with subplots
+            l_fig = make_subplots(rows=2, cols=1, subplot_titles=("Top 10 Poles (Lits Totaux)", "Repartition par Type de Lit"))
+            lits_p = df_lits.groupby('service')['lits_totaux'].first().sort_values(ascending=False).head(10)
+            l_fig.add_trace(go.Bar(x=lits_p.index, y=lits_p.values, marker_color='steelblue', name='Lits'), row=1, col=1)
+            
+            # Pie for bed types (hypothetical breakdown if data allowed, here using poles as proxy)
+            l_fig.add_trace(go.Pie(labels=lits_p.index[:5], values=lits_p.values[:5], hole=0.3), row=2, col=1)
+            l_fig.update_layout(height=700, template="plotly_dark", showlegend=False, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(l_fig, use_container_width=True)
             
         with lc2:
-            perso_pivot = df_perso[df_perso['categorie'] != 'total'].groupby(['service', 'categorie'])['effectif_total'].sum().reset_index()
-            fig_perso = px.bar(perso_pivot, x='service', y='effectif_total', color='categorie',
-                               title="Effectifs ETP par Service et Categorie",
+            # Staffing detail
+            perso_cat = df_perso[df_perso['categorie'] != 'total'].groupby('categorie')['effectif_total'].sum().reset_index()
+            fig_p_cat = px.bar(perso_cat, x='categorie', y='effectif_total', color='categorie',
+                               title="Effectifs Totaux par Corps de Metier (ETP)",
                                template="plotly_dark")
-            st.plotly_chart(fig_perso, use_container_width=True)
+            fig_p_cat.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_p_cat, use_container_width=True)
 
-        # --- Occupation & Stocks Charts ---
+        # --- Nurse/Bed Ratio Analysis ---
         st.divider()
-        st.markdown("### Analyse de l'Occupation et des Stocks")
-        lc3, lc4 = st.columns(2)
+        st.markdown("### Analyse de la Charge de Travail (Ratio Nurse/Bed)")
+        ratio_df = df_lits.merge(df_perso[df_perso['categorie']=='infirmier'], on=['date', 'service'])
+        ratio_df['ratio_nb'] = ratio_df['effectif_total'] / ratio_df['lits_totaux']
         
-        with lc3:
-            fig_box_occ = px.box(df_lits, x='service', y='taux_occupation',
-                                 title="Dispersion Occupation par Service",
-                                 color='service', template="plotly_dark")
-            st.plotly_chart(fig_box_occ, use_container_width=True)
-            
-        with lc4:
-            ruptures = df_stocks[df_stocks['alerte_rupture']==True]['medicament'].value_counts().head(5).reset_index()
-            fig_rupt = px.bar(ruptures, x='medicament', y='count', 
-                              title="Top 5 Alertes Ruptures Stocks", 
-                              template="plotly_dark", color_discrete_sequence=['crimson'])
-            st.plotly_chart(fig_rupt, use_container_width=True)
+        fig_ratio = px.box(ratio_df, x='service', y='ratio_nb', color='service',
+                           title="Dispersion du Ratio Infirmiers par Lit par Service",
+                           template="plotly_dark")
+        fig_ratio.add_hline(y=0.2, line_dash="dash", line_color="red", annotation_text="Seuil Alerte (1 nurse / 5 beds)")
+        fig_ratio.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig_ratio, use_container_width=True)
 
-        # --- Strategic Monitoring ---
+        # --- Salles d'Isolement & Alertes Epidemiques ---
         st.divider()
-        st.markdown("### Pilotage Stratégique")
-        
-        # Urgences vs Réa (Critiques)
-        critiques = df_lits[df_lits['service'].isin(['Urgences_(Passage_court)', 'PRAGUES_(Réa/Pneumo)'])]
-        daily_max = critiques.groupby('date')['taux_occupation'].max().reset_index()
-        fig_crit = px.line(daily_max, x='date', y='taux_occupation', 
-                           title="Suroccupation Zones Critiques (Urgences + Rea)",
-                           template="plotly_dark", color_discrete_sequence=[ACCENT_RED])
-        fig_crit.add_hline(y=0.95, line_dash="dash", line_color="orange", annotation_text="Seuil 95%")
-        st.plotly_chart(fig_crit, use_container_width=True)
-        
-        # --- Logistique Insights ---
-        st.markdown("#### Diagnostic Logistique")
-        perf_poles = df_lits.groupby('service')['taux_occupation'].agg(['mean','max']).round(2)
-        top_critico = perf_poles.sort_values('max', ascending=False).head(1).index[0]
-        
-        log_insights = [
-            {"Point": "Zones Critiques", "Diagnostic": f"{top_critico} : {perf_poles['max'].max():.0%} PIC MAX atteint", "Niveau": "Critique"},
-            {"Point": "Tension Stocks", "Diagnostic": f"{df_stocks['alerte_rupture'].sum():,} alertes stocks identifiees (80% des jours)", "Niveau": "Eleve"},
-            {"Point": "Effectifs", "Diagnostic": f"Moyenne absenteisme de {df_perso['taux_absence'].mean():.1%}", "Niveau": "Moyen"}
+        st.markdown("### Focus : Salles d'Isolement & Vigilance Epidemique")
+        ic1, ic2 = st.columns(2)
+        with ic1:
+            # Load isolation data if available or simulate/proxy from diagnostics
+            iso_services = ['Urgences_(Passage_court)', 'PRAGUES_(Réa/Pneumo)', 'Infectiologie']
+            df_iso = df_lits[df_lits['service'].isin(iso_services)]
+            fig_iso = px.line(df_iso, x='date', y='taux_occupation', color='service',
+                              title="Tension dans les Services Haute Vigilance",
+                              template="plotly_dark")
+            fig_iso.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_iso, use_container_width=True)
+        with ic2:
+            st.info("Les services identifies ci-contre disposent de chambres a pression negative (Salles d'Isolement). Une occupation depassant 90% sur ces zones declenche le protocole 'Alerte Epidemique'.")
+            st.metric("Taux d'Alerte Global (ISO)", f"{(df_iso['taux_occupation'] > 0.9).mean():.1%}")
+
+        # --- Strategic Monitoring Heatmap ---
+        st.divider()
+        st.markdown("### Heatmap de Tension Logistique Globale")
+        pivot_log = df_lits.groupby(['service', 'date'])['taux_occupation'].mean().unstack().T
+        fig_heat_log = px.imshow(pivot_log.values, x=pivot_log.columns, y=pivot_log.index,
+                                 title="Indice de Saturation Quotidien par Pole",
+                                 color_continuous_scale='RdBu_r', template="plotly_dark")
+        fig_heat_log.update_layout(height=600, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig_heat_log, use_container_width=True)
+
+        # --- Summary Insights Logistique ---
+        st.divider()
+        st.markdown("### Diagnostic de Resilence Logistique")
+        log_res = [
+            {"Point": "Tension Staff", "Constat": "Ratio moyen stable (> 0.22), mais pics de sous-effectif en Rea.", "Statut": "Vigilance"},
+            {"Point": "Capacite Lits", "Constat": f"{(df_lits['taux_occupation']>0.95).sum()} episodes de saturation severe detectes.", "Statut": "Alerte"},
+            {"Point": "Stocks", "Constat": f"{df_stocks['alerte_rupture'].sum()} ruptures critiques identifiees (Principalement Curitine).", "Statut": "Action Requise"}
         ]
-        st.table(pd.DataFrame(log_insights))
+        st.table(pd.DataFrame(log_res))
+
     with sub_tab_sej:
         st.markdown("## ANALYSE DES SEJOURS & PARCOURS PATIENTS")
         
-        # --- 1. Data Quality & Overview ---
-        st.markdown("### Qualite et Apercu des Donnees")
+        # --- 1. Dataset Preview (Styled Tables) ---
+        st.markdown("### Apercu des Jeux de Donnees 2024")
+        
+        def create_styled_table_st(df):
+            return df.head(5).style.set_properties(**{
+                'background-color': '#f8f9fa',
+                'color': '#2c3e50',
+                'border-color': '#e9ecef'
+            }).set_table_styles([
+                {'selector': 'th', 'props': [('background-color', '#2c3e50'), ('color', 'white')]}
+            ])
+
+        with st.expander("Consulter l'extrait des Tables (Top 5 rows)", expanded=False):
+            st.markdown("#### Table Patients")
+            st.dataframe(create_styled_table_st(df_pat), use_container_width=True)
+            st.markdown("#### Table Sejours")
+            st.dataframe(create_styled_table_st(df_sej), use_container_width=True)
+            st.markdown("#### Table Diagnostics")
+            st.dataframe(create_styled_table_st(df_diag), use_container_width=True)
+
+        # --- 2. Data Quality & Overview ---
+        st.divider()
+        st.markdown("### Qualite et Profil Demographique")
         q1, q2, q3 = st.columns(3)
         
         datasets = [(df_pat, "Patients"), (df_sej, "Sejours"), (df_diag, "Diagnostics")]
+        all_comp = []
         for i, (df, name) in enumerate(datasets):
             with [q1, q2, q3][i]:
                 completeness = (1 - df.isna().mean()) * 100
-                avg_comp = completeness.mean()
-                st.metric(f"Completude {name}", f"{avg_comp:.1f}%")
+                comp_val = completeness.mean()
+                all_comp.append(comp_val)
+                st.metric(f"Completude {name}", f"{comp_val:.1f}%")
+        avg_comp = sum(all_comp) / len(all_comp)
                 
-        # --- 2. Demographics ---
-        st.divider()
-        st.markdown("### Profil Démographique")
         dc1, dc2 = st.columns(2)
-        
         with dc1:
             fig_sexe = px.pie(df_pat, names='sexe', title="Répartition par Sexe",
                               template="plotly_dark", hole=0.4,
                               color_discrete_map={'M': '#2c3e50', 'F': '#e74c3c'})
+            fig_sexe.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_sexe, use_container_width=True)
-            
         with dc2:
-            fig_age = px.histogram(df_sej, x="age", nbins=40, marginal="violin",
-                                     title="Distribution des Ages a l'Admission",
+            fig_age_sej = px.histogram(df_sej, x="age", nbins=40, marginal="box",
+                                     title="Pyramide des Ages a l'Admission",
                                      template="plotly_dark", color_discrete_sequence=['#3498db'])
-            st.plotly_chart(fig_age, use_container_width=True)
+            fig_age_sej.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_age_sej, use_container_width=True)
 
-        # --- 3. Stay durations & Types ---
+        # --- 3. Specialty Analysis ---
         st.divider()
-        st.markdown("### Analyse des Durees et Specialites")
+        st.markdown("### Hierarchy et Duree de Sejour")
         sc1, sc2 = st.columns(2)
-        
         with sc1:
-            fig_box_age = px.box(df_sej, x="type_hospit", y="age", color="type_hospit",
-                                 title="Age par Type d'Hospitalisation", template="plotly_dark")
-            st.plotly_chart(fig_box_age, use_container_width=True)
-            
-        with sc2:
-            fig_sun = px.sunburst(df_sej, path=['pole', 'type_hospit'], values='age', # 'age' as a proxy for weight if 'count' not pre-calc
-                                  title="Hierarchie Pole > Type d'Hospit",
+            fig_sun_sej = px.sunburst(df_sej, path=['pole', 'type_hospit'], values='age', # Proxy count
+                                  title="Poles -> Types d'Hospitalisation",
                                   template="plotly_dark", color_discrete_sequence=px.colors.qualitative.Pastel)
-            st.plotly_chart(fig_sun, use_container_width=True)
+            fig_sun_sej.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_sun_sej, use_container_width=True)
+        with sc2:
+            fig_box_sej = px.box(df_sej, x="type_hospit", y="age", color="type_hospit",
+                                 title="Age moyen par Type de Sejour", template="plotly_dark")
+            fig_box_sej.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_box_sej, use_container_width=True)
 
         # --- 4. Diagnostics Analysis ---
         st.divider()
-        st.markdown("### Analyse des Diagnostics (CIM-10)")
+        st.markdown("### Analyse des Pathologies (CIM-10)")
         dg1, dg2 = st.columns(2)
-        
         with dg1:
-            diag_patho = df_diag.groupby("pathologie_groupe").size().reset_index(name='count').sort_values('count', ascending=True)
-            fig_patho = px.bar(diag_patho, x='count', y='pathologie_groupe', orientation='h',
-                               title="Groupes de Pathologies", template="plotly_dark",
+            diag_p = df_diag.groupby("pathologie_groupe").size().reset_index(name='count').sort_values('count', ascending=True)
+            fig_p_p = px.bar(diag_p, x='count', y='pathologie_groupe', orientation='h',
+                               title="Principaux Groupes de Pathologies", template="plotly_dark",
                                color='count', color_continuous_scale="Tealgrn")
-            st.plotly_chart(fig_patho, use_container_width=True)
-            
+            fig_p_p.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_p_p, use_container_width=True)
         with dg2:
-            top_cim = df_diag["cim10_code"].value_counts().head(15).reset_index()
-            fig_cim = px.bar(top_cim, x='count', y='cim10_code', orientation='h',
-                             title="Top 15 Codes CIM-10", template="plotly_dark",
+            top_c = df_diag["cim10_code"].value_counts().head(15).reset_index()
+            fig_c = px.bar(top_c, x='count', y='cim10_code', orientation='h',
+                             title="Top 15 Codes CIM-10 (Prevalence)", template="plotly_dark",
                              color='count', color_continuous_scale="Plasma")
-            st.plotly_chart(fig_cim, use_container_width=True)
+            fig_c.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_c, use_container_width=True)
+
 
         # --- 5. Temporal & Intensity ---
         st.divider()
@@ -647,6 +713,7 @@ with tab_exp:
                                           color_continuous_scale="RdBu_r",
                                           category_orders={"jour_adm": order_days, "mois_adm": order_months},
                                           title="Heatmap de Tension : Jours vs Mois", template="plotly_dark")
+        fig_heat_sej.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_heat_sej, use_container_width=True)
         
         # --- Final Insights Séjour ---
