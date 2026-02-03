@@ -302,7 +302,7 @@ df_lits, df_perso, df_equip, df_stocks = get_logistique_data()
 df_pat, df_sej, df_diag = get_patient_sejour_data()
 model_lgbm = load_champion_model()
 
-# Global Time Series for all tabs
+# Global Time Series (Defined once for all tabs)
 daily_ts = df_adm.groupby('date_entree').size().rename('admissions')
 st.logo(LOGO_PATH, icon_image=LOGO_PATH)
 
@@ -339,14 +339,13 @@ tab_acc, tab_exp, tab_ml, tab_sim, tab_tea = st.tabs([
 
 with tab_acc:
     st.markdown("<h2 style='font-weight:800;'>Panorama de l'Activite Reelle</h2>", unsafe_allow_html=True)
-    daily_stats = df_adm.groupby('date_entree').size()
     
     m1, m2, m3 = st.columns(3)
     m1.metric("Total Admissions 2024", f"{len(df_adm):,}")
-    m2.metric("Moyenne Quotidienne", f"{daily_stats.mean():.1f}")
-    m3.metric("Jour de Pic", f"{daily_stats.max()}")
+    m2.metric("Moyenne Quotidienne", f"{daily_ts.mean():.1f}")
+    m3.metric("Jour de Pic", f"{daily_ts.max()}")
     
-    fig_main = px.line(daily_stats.reset_index(), x='date_entree', y=0, 
+    fig_main = px.line(daily_ts.reset_index(), x='date_entree', y='admissions', 
                        title="Flux d'admissions quotidiens - 2024", 
                        template="plotly_dark", color_discrete_sequence=[SECONDARY_BLUE])
     fig_main.update_layout(height=400, margin=dict(l=0,r=0,b=0,t=40), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
@@ -909,10 +908,11 @@ with tab_sim:
                                         ["Capacité en Lits (Rea/Med)", "Effectif Soignant (Infirmiers)", "Stocks de Sécurité (Médicaments)"])
         
     if st.button("Lancer la Simulation d'Impact"):
-        if model_lgbm and 'df_adm' in locals():
-            # Get model baseline for next 14 days
-            daily_ts = df_adm.groupby('date_entree').size().rename('admissions').asfreq('D', fill_value=0)
-            _, future_preds = predict_future_admissions(daily_ts, model_lgbm)
+        # daily_ts is defined globally at line 306
+        if model_lgbm:
+            # Baseline next 14 days
+            daily_series_sim = daily_ts.asfreq('D', fill_value=0)
+            _, future_preds = predict_future_admissions(daily_series_sim, model_lgbm)
             avg_predicted = future_preds.mean()
             
             # Stress calculation
