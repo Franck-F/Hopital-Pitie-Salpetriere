@@ -19,12 +19,12 @@ Le projet repose sur une pile technologique moderne et performante :
 
 Le modèle retenu est un **LightGBM Regressor**.
 
-- **Performance** : MAE < 1.0 (Erreur Absolue Moyenne).
+- **Performance** : MAE < 5.0 (Erreur Absolue Moyenne).
 - **Variables Clés (Features)** :
   - Lag 1 : Admissions de la veille.
   - Lag 2 : Tendance à 48h.
   - Lag 7 : Récurrence hebdomadaire (Pattern lundi-dimanche).
-- **Robustesse** : Le modèle a été calibré pour résister au bruit statistique des périodes de transition (ex: mois de décembre).
+- **Robustesse** : Le modèle a été calibré pour résister au bruit statistique des périodes de transition (ex: mois de décembre, janvier et février).
 
 ## 4. Modules Exploration (EDA)
 

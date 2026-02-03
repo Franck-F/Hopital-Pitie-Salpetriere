@@ -4,11 +4,14 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.53.1-FF4B4B.svg?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![LightGBM](https://img.shields.io/badge/lightgbm-FF4B4B.svg?style=flat&logo=streamlit&logoColor=white)](https://lightgbm.com.)
+---
+
 [![Aperçu Application](app/assets/demo_screenshot.png)](https://hopital-pitie-salpetrieregit-jsfpemvrjtde9tma3f7yq6.streamlit.app/)
 
 ## Overview
 
-Ce projet déploie un système de prévision avancé pour l'Hôpital Pitié-Salpêtrière...
+Ce projet vise à développer un système de prévision et de gestion des ressources pour l'Hôpital Pitié-Salpêtrière. Il permet d'anticiper les photos d'activité, d'optimiser l'allocation des lits et du personnel, et de fournir un tableau de bord interactif pour les décideurs hospitaliers.
 
 ## Stack Technique
 

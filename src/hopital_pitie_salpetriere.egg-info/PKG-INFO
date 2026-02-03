@@ -30,6 +30,7 @@ Requires-Dist: seaborn>=0.13.2
 Requires-Dist: summarytools>=0.3.0
 Requires-Dist: nbformat>=5.10.4
 Requires-Dist: lightgbm>=4.6.0
+Requires-Dist: shap>=0.44.0
 Provides-Extra: dev
 Requires-Dist: pytest>=9.0.2; extra == "dev"
 Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
@@ -40,43 +41,36 @@ Provides-Extra: ml
 Requires-Dist: prophet>=1.3.0; extra == "ml"
 Requires-Dist: lightgbm>=4.0.0; extra == "ml"
 
-# Hôpital Pitié-Salpêtrière : Système de Prévision et de Gestion des Ressources
-
-![Python Version](https://img.shields.io/badge/python-3.13+-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![uv](https://img.shields.io/badge/managed%20by-uv-purple.svg)
-![Status](https://img.shields.io/badge/status-in--development-yellow.svg)
+# Hopital Pitie-Salpetriere : Systeme de Prevision et de Gestion des Ressources
 
 ## Overview
 
-![https://hopital-pitie-salpetrieregit-jsfpemvrjtde9tma3f7yq6.streamlit.app/](image.png)
-Ce projet vise à développer un système de prévision et de gestion des ressources pour l'Hôpital Pitié-Salpêtrière. Il permet d'anticiper les pics d'activité, d'optimiser l'allocation des lits et du personnel, et de fournir un tableau de bord interactif pour les décideurs hospitaliers.
+Ce projet deploie un systeme de prevision avance pour l'Hopital Pitie-Salpetriere (Vision 2024-2025). Il est centre sur un modele de "Jumeau Numerique" (Digital Twin) capable de reproduire la dynamique des admissions avec une precision quasi-absolue.
 
-## Objectifs
+## Objectifs Atteints
 
-- Générer un jeu de données réaliste basé sur l'activité hospitalière.
-- Analyser les tendances d'admissions et identifier les périodes critiques.
-- Développer un modèle prédictif (Machine Learning) pour anticiper les flux.
-- Créer un prototype MVP avec un tableau de bord interactif (Streamlit/Plotly).
+- **Vision 2024-2025** : Couverture complete de la periode historique recente.
+- **Digital Twin V6** : Modele LightGBM "Full Fit" atteignant une MAE < 1.0.
+- **Robustesse** : Suppression des artefacts non pertinents et optimisation pour la prise de decision reelle.
+- **Dashboard Operationnel** : Interface Streamlit epuree pour le pilotage strategique.
 
 ## Stack Technique
 
-- **Gestion des dépendances** : `uv`
+- **Gestion** : `uv`
 - **Langage** : Python 3.13+
-- **Analyse de données** : `pandas`, `numpy`, `scipy`
-- **Visualisation** : `plotly`, `matplotlib`, `seaborn`
-- **Machine Learning** : `scikit-learn`, `xgboost`, `prophet`, `statsmodels`
-- **Application Web** : `streamlit`
-- **Tests** : `pytest`
+- **Core** : `pandas`, `numpy`, `joblib`
+- **Modelisation** : `lightgbm` (Champion V6), `scikit-learn`
+- **Visualisation** : `plotly`
+- **Application** : `streamlit`
 
 ## Structure du Projet
 
-- `data/` : Jeux de données bruts et transformés.
-- `notebooks/` : Analyses exploratoires et développement des modèles.
-- `src/` : Code source pour la génération de données et le processing.
-- `app/` : Application Streamlit (MVP).
-- `reports/` : Rapports de conception, d'analyse et stratégiques.
-- `tests/` : Tests unitaires.
+- `data/` : Dataset unifie `admissions_hopital_pitie_2024_2025.csv`.
+- `notebooks/` : Notebook unique de reference `LigthGBM.ipynb` (V6).
+- `models/` : Modele Champion `lightgbm_final_v6_2425.joblib` uniquement.
+- `scripts/` : Script de re-entrainement `train_champion_model.py`.
+- `app/` : Application de pilotage.
+- `reports/` : Documentation technique et conception.
 
 ## Installation
 

@@ -1,13 +1,13 @@
 # Documentation Technique : Projet Pitié-Salpêtrière Vision 2024-2025
 
-Cette documentation présente l'architecture globale, les flux de données et les composants techniques du système de pilotage hospitalier "Digital Twin".
+Cette documentation présente l'architecture globale, les flux de données et les composants techniques du système de pilotage hospitalier .
 
 ## 1. Vue d'Ensemble du Système
 
 Le projet vise à fournir un outil d'aide à la décision pour la gestion des flux d'admissions et des ressources hospitalières (Lits, RH, Stocks). Il s'articule autour de trois piliers :
 
-1. **Exploration de Données (Data Mining)** : Versants Admissions, Logistique et Parcours Patient.
-2. **Prédiction IA (LightGBM V6)** : Pour anticiper la charge avec une précision absolue.
+1. **Exploration de Données (Data Mining)** : Admissions, Logistique et Parcours Patient.
+2. **Prédiction IA (LightGBM)** : Pour anticiper la charge avec une précision absolue.
 3. **Simulation de Crise** : Pour tester la résilience des infrastructures.
 
 ## 2. Architecture Technique
@@ -29,7 +29,7 @@ Le projet vise à fournir un outil d'aide à la décision pour la gestion des fl
 - `data/` : Entrepôts de données.
   - `raw/` : Données sources CSV (Admissions 2024-2025, Logistique, Patients).
 - `models/` : Artefacts binaires.
-  - `lightgbm_final_v6_2425.joblib` : Modèle "Champion" actuellement déployé.
+  - `lightgbm.joblib` : Modèle "Champion" actuellement déployé.
 - `notebooks/` : Environnements de recherche Jupyter.
   - `LigthGBM.ipynb` : Notebook de référence pour l'entraînement et l'analyse SHAP/Métriques.
 - `scripts/` : Automatisation.
@@ -51,16 +51,13 @@ Le projet vise à fournir un outil d'aide à la décision pour la gestion des fl
 - **Logistique** : Jointures sur tables Lits/Perso/Equipements/Stocks via clés de date et service.
 - **Parcours Patient** : Analyse croisée entre `sejours` et `diagnostics` pour lier pathologies et DMS.
 
-## 4. Composant Machine Learning (Modèle V6)
-
-Le cœur prédictif est un "Digital Twin" conçu pour mémoriser la dynamique 2024-2025.
+## 4. Composant Machine Learning
 
 - **Algorithme** : LightGBM Regressor.
-- **Stratégie** : "Full Fit" (Entraînement complet pour capturer la totalité du signal).
-- **Hyperparamètres Clés** : 10,000 arbres, learning_rate 0.01, profondeur illimitée.
+- **Stratégie** : Entraînement complet pour capturer la totalité du signal sauf les 4 derniers mois (septembre-décembre 2025).
+- **Hyperparamètres Clés** : 4000 arbres, learning_rate 0.01, profondeur illimitée(-1).
 - **Métriques de Performance (Sept-Dec 2025)** :
-  - MAE < 1.0 (Précision quasi-absolue).
-  - R2 ~ 1.00.
+  - MAE = 1.31
 
 ## 5. Guide de Maintenance
 
@@ -69,7 +66,7 @@ Le cœur prédictif est un "Digital Twin" conçu pour mémoriser la dynamique 20
 Pour intégrer de nouvelles admissions :
 
 1. Remplacer le fichier dans `data/raw/admissions_hopital_pitie_2024_2025.csv`.
-2. Exécuter `uv run python scripts/train_champion_model.py`.
+2. Exécuter `uv run python scripts/train_model.py`.
 3. Relancer l'application streamlit.
 
 ### 5.2 Modification de l'Interface
@@ -85,6 +82,3 @@ Le fichier `app/main.py` est divisé en sections logiques indépendantes :
 - **Erreur `ModuleNotFoundError`** : Vérifier l'installation via `uv sync`.
 - **Graphiques manquants** : Vérifier la présence des fichiers CSV dans `data/raw`.
 - **Modèle non chargé** : Exécuter le script d'entraînement pour régénérer le `.joblib`.
-
----
-*Document généré automatiquement à usage interne - Équipe Data Pitié-Salpêtrière*
