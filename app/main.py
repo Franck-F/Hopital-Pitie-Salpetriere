@@ -842,7 +842,7 @@ with tab_exp:
         st.table(sej_insights_df)
 
 with tab_ml:
-    st.markdown("## Previsions de Charge Hospitaliere")
+    st.markdown("## Previsions de Charge Hospitaliere (v6.1)")
     st.markdown("Moteur predictif **LightGBM Champion** (Performance Maximale).")
     
     if model_lgbm:
