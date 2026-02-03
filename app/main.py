@@ -215,16 +215,15 @@ def predict_future_admissions(df_daily, model, days=14):
         
     last_date = df_daily.index.max()
     future_dates = [last_date + timedelta(days=x) for x in range(1, days + 1)]
-    
-    # Simple recursive forecast or just based on time features for demo
-    # For a robust forecast, we need to generate features for future dates
     future_df = pd.DataFrame(index=future_dates)
-    future_df['dayofweek'] = future_df.index.dayofweek
-    future_df['quarter'] = future_df.index.quarter
-    future_df['month'] = future_df.index.month
-    future_df['year'] = future_df.index.year
+    
+    # Cyclical features for time
+    future_df['month_sin'] = np.sin(2 * np.pi * future_df.index.month / 12)
+    future_df['month_cos'] = np.cos(2 * np.pi * future_df.index.month / 12)
+    future_df['day_sin'] = np.sin(2 * np.pi * future_df.index.dayofweek / 7)
+    future_df['day_cos'] = np.cos(2 * np.pi * future_df.index.dayofweek / 7)
+    
     future_df['dayofyear'] = future_df.index.dayofyear
-    future_df['dayofmonth'] = future_df.index.day
     future_df['weekofyear'] = future_df.index.isocalendar().week.astype(int)
     
     # Lags (using last available data)
@@ -236,7 +235,7 @@ def predict_future_admissions(df_daily, model, days=14):
     future_df['roll_mean_7'] = df_daily.tail(7).mean()
     future_df['roll_std_7'] = df_daily.tail(7).std()
     
-    FEATURES = ['dayofweek', 'quarter', 'month', 'year', 'dayofyear', 'dayofmonth', 
+    FEATURES = ['month_sin', 'month_cos', 'day_sin', 'day_cos', 'dayofyear', 
                 'weekofyear', 'lag1', 'lag7', 'lag14', 'roll_mean_7', 'roll_std_7']
                 
     preds = model.predict(future_df[FEATURES])
@@ -285,7 +284,7 @@ with st.sidebar:
         st.session_state.page = 'landing'
         st.rerun()
 
-    tab_acc, tab_exp, tab_ml, tab_sim, tab_tea = st.tabs([
+tab_acc, tab_exp, tab_ml, tab_sim, tab_tea = st.tabs([
     "TABLEAU DE BORD", "EXPLORATION DATA", "PREVISIONS ML", "SIMULATEUR", "EQUIPE PROJET"
 ])
 
