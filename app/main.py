@@ -18,7 +18,6 @@ warnings.filterwarnings('ignore')
 # --- Page Config ---
 st.set_page_config(
     page_title="Pitie-Salpetriere | Vision 2026",
-    page_icon="app/assets/logo_ps.png",
     layout="wide",
 )
 
@@ -499,15 +498,52 @@ with tab_exp:
             else:
                 st.info(f"Pas de difference significative (p={p_val:.6f})")
 
-        # --- Insights Summary ---
+        # --- Detection d'Anomalies (IQR) ---
         st.divider()
-        st.markdown("### Synthèse des Insights Admissions")
-        insights_adm = [
-            {"Point": "Tension Temporelle", "Description": f"Pic en {df_adm.groupby('mois_nom').size().idxmax()} avec {df_adm.groupby('mois_nom').size().max():,} admissions."},
-            {"Point": "Top Pole", "Description": f"{df_adm['service'].value_counts().index[0]} represente {(df_adm['service'].value_counts().iloc[0]/len(df_adm)*100):.1f}% du volume."},
-            {"Point": "Anomalies", "Description": f"{len(outliers)} jours de pics anormaux identifiés (Alerte Risque)."}
+        st.markdown("### Detection d'Anomalies et Pics de Charge")
+        
+        Q1 = daily_ts.quantile(0.25)
+        Q3 = daily_ts.quantile(0.75)
+        IQR = Q3 - Q1
+        upper_bound = Q3 + 1.5 * IQR
+        outliers = daily_ts[daily_ts > upper_bound]
+        
+        fig_ano = go.Figure()
+        fig_ano.add_trace(go.Scatter(x=daily_ts.index, y=daily_ts.values, mode='lines', name='Admissions', line=dict(color=SECONDARY_BLUE, width=1)))
+        fig_ano.add_trace(go.Scatter(x=outliers.index, y=outliers.values, mode='markers', name='Pics Anormaux', marker=dict(color=ACCENT_RED, size=8, symbol='x')))
+        fig_ano.add_hline(y=upper_bound, line_dash="dash", line_color=ACCENT_RED, annotation_text="Seuil Alerte (IQR)")
+        fig_ano.update_layout(height=400, template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=30, b=30))
+        st.plotly_chart(fig_ano, use_container_width=True)
+
+        # --- Evolution Top 5 Poles ---
+        st.divider()
+        st.markdown("### Evolution des Flux par Pole (Moyenne Mobile 7j)")
+        
+        top_poles_names = df_adm['service'].value_counts().head(5).index
+        fig_poles_evol = go.Figure()
+        
+        for pole in top_poles_names:
+            pole_daily = df_adm[df_adm['service'] == pole].groupby('date_entree').size().asfreq('D', fill_value=0)
+            pole_ma = pole_daily.rolling(window=7).mean()
+            fig_poles_evol.add_trace(go.Scatter(x=pole_ma.index, y=pole_ma.values, mode='lines', name=pole))
+            
+        fig_poles_evol.update_layout(height=450, template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig_poles_evol, use_container_width=True)
+
+        # --- Final Insights Summary ---
+        st.divider()
+        st.markdown("### Synthese Strategique des Admissions")
+        
+        peak_month = df_adm.groupby('mois_nom').size().idxmax()
+        main_mode = df_adm['mode_entree'].mode()[0]
+        
+        insights_rows = [
+            {"Indicateur": "Pic Saisonnier", "Valeur": peak_month, "Observation": "Charge maximale observee."},
+            {"Indicateur": "Mode d'Entree Dominant", "Valeur": main_mode, "Observation": "Vecteur principal d'admission."},
+            {"Indicateur": "Jours Critiques", "Valeur": f"{len(outliers)} jours", "Observation": "Depassement des seuils de garde."},
+            {"Indicateur": "Variabilite (CV)", "Valeur": f"{(daily_ts.std()/daily_ts.mean()*100):.1f}%", "Observation": "Besoin de flexibilite RH."}
         ]
-        st.table(pd.DataFrame(insights_adm))
+        st.table(pd.DataFrame(insights_rows))
 
 
     with sub_tab_log:
@@ -579,6 +615,38 @@ with tab_exp:
         with ic2:
             st.info("Les services identifies ci-contre disposent de chambres a pression negative (Salles d'Isolement). Une occupation depassant 90% sur ces zones declenche le protocole 'Alerte Epidemique'.")
             st.metric("Taux d'Alerte Global (ISO)", f"{(df_iso['taux_occupation'] > 0.9).mean():.1%}")
+
+        # --- Monitoring des Stocks & Ruptures Critiques ---
+        st.divider()
+        st.markdown("### Gestion des Stocks et Ruptures Critiques")
+        sc1, sc2 = st.columns([1, 1.2])
+        
+        with sc1:
+            st.write("Hierarchie des ruptures constatees (Points de vigilance majeurs).")
+            # Data from EDA source
+            rupt_data = pd.DataFrame({
+                'Medicament': ['Antibiotiques', 'Morphine IV', 'Insuline', 'Heparine', 'Paracetamol'],
+                'Occurences': [650, 420, 220, 120, 49]
+            })
+            fig_rupt = px.bar(rupt_data, y='Medicament', x='Occurences', orientation='h', 
+                             title="Hierarchie des Ruptures (Cumul jours)",
+                             color='Occurences', color_continuous_scale='Reds',
+                             template="plotly_dark")
+            fig_rupt.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False)
+            st.plotly_chart(fig_rupt, use_container_width=True)
+            
+        with sc2:
+            st.write("Analyse saisonniere de l'absenteisme soignant par service.")
+            abs_df = df_perso.copy()
+            abs_df['mois'] = abs_df['date'].dt.month
+            abs_agg = abs_df.groupby(['mois', 'service'])['taux_absence'].mean().reset_index()
+            
+            fig_abs = px.line(abs_agg, x='mois', y='taux_absence', color='service',
+                             title="Saisonnalite de l'Absenteisme (%)",
+                             template="plotly_dark")
+            fig_abs.update_xaxes(tickvals=list(range(1,13)), ticktext=['Jan','Fev','Mar','Avr','Mai','Juin','Juil','Aout','Sep','Oct','Nov','Dec'])
+            fig_abs.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_abs, use_container_width=True)
 
         # --- Strategic Monitoring Heatmap ---
         st.divider()
@@ -680,12 +748,63 @@ with tab_exp:
             fig_p_p.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_p_p, use_container_width=True)
         with dg2:
-            top_c = df_diag["cim10_code"].value_counts().head(15).reset_index()
-            fig_c = px.bar(top_c, x='count', y='cim10_code', orientation='h',
-                             title="Top 15 Codes CIM-10 (Prevalence)", template="plotly_dark",
-                             color='count', color_continuous_scale="Plasma")
-            fig_c.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-            st.plotly_chart(fig_c, use_container_width=True)
+            # Donut for Diagnostic Type
+            repartition = df_diag["type_diagnostic"].value_counts().reset_index()
+            repartition.columns = ["type", "count"]
+            fig_donut = px.pie(repartition, values="count", names="type", hole=0.5,
+                               title="Repartition des Types de Diagnostics",
+                               color_discrete_sequence=['#2C3E50', '#E74C3C'], # Pro Dark / Pro Red
+                               template="plotly_dark")
+            fig_donut.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig_donut, use_container_width=True)
+
+        # --- 5. Age vs Duration Correlation ---
+        st.divider()
+        st.markdown("### Analyse de Corrélation : Age vs Durée de Séjour")
+        
+        # Taking a representative sample for the scatter plot
+        sample_size = min(500, len(df_sej))
+        sample_sej = df_sej.sample(n=sample_size, random_state=42)
+        
+        fig_scatter = px.scatter(sample_sej, x="age", y="duree_jours", color="pole", size="age",
+                                 title=f"Repartition Age / DMS (Echantillon {sample_size} patients)",
+                                 template="plotly_dark", opacity=0.7)
+        fig_scatter.add_hline(y=df_sej['duree_jours'].mean(), line_dash="dot", annotation_text="DMS Moyenne")
+        fig_scatter.add_vline(x=df_sej['age'].mean(), line_dash="dot", annotation_text="Age Moyen")
+        fig_scatter.update_layout(height=500, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig_scatter, use_container_width=True)
+
+        # --- 6. Multidimensional Pole Profiling (Radar) ---
+        st.divider()
+        st.markdown("### Profiling Multidimensionnel des Poles (Radar)")
+        
+        # Prepare radar data
+        radar_raw = df_sej.groupby('pole').agg({
+            'age': 'mean',
+            'duree_jours': 'mean',
+            'id_sejour': 'count'
+        }).reset_index()
+        
+        # Normalize for radar visualization (Scale 0-1)
+        for col in ['age', 'duree_jours', 'id_sejour']:
+            radar_raw[f'{col}_norm'] = radar_raw[col] / radar_raw[col].max()
+            
+        fig_radar = go.Figure()
+        categories = ['Age Moyen', 'Duree Sejour (DMS)', 'Volume Activite']
+        top_poles_radar = radar_raw.sort_values('id_sejour', ascending=False).head(3)
+        
+        for i, row in top_poles_radar.iterrows():
+            fig_radar.add_trace(go.Scatterpolar(
+                r=[row['age_norm'], row['duree_jours_norm'], row['id_sejour_norm']],
+                theta=categories, fill='toself', name=row['pole']
+            ))
+            
+        fig_radar.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
+            height=500, template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)", showlegend=True
+        )
+        st.plotly_chart(fig_radar, use_container_width=True)
 
 
         # --- 5. Temporal & Intensity ---
@@ -705,16 +824,18 @@ with tab_exp:
         st.plotly_chart(fig_heat_sej, use_container_width=True)
         
         # --- Final Insights Séjour ---
-        st.markdown("#### Diagnostic Parcours Patient")
+        st.divider()
+        st.markdown("### Synthese des Parcours Patients")
         dms = df_sej['duree_jours'].mean()
         top_patho = df_diag['pathologie_groupe'].value_counts().index[0]
         
-        sej_insights = [
-            {"Indicateur": "Duree Moyenne de Sejour (DMS)", "Valeur": f"{dms:.1f} jours", "Note": "Stable par rapport a 2023"},
-            {"Indicateur": "Pathologie Dominante", "Valeur": top_patho, "Note": "Necessite vigilance ressources dediees"},
-            {"Indicateur": "Qualite des Codages", "Valeur": f"{avg_comp:.1f}%", "Note": "Excellente completude diagnostique"}
-        ]
-        st.table(pd.DataFrame(sej_insights))
+        sej_insights_df = pd.DataFrame([
+            {"Indicateur": "Duree Moyenne de Sejour (DMS)", "Valeur": f"{dms:.1f} jours", "Note": "Optimisation des flux requise."},
+            {"Indicateur": "Pathologie Dominante", "Valeur": top_patho, "Note": "Vigilance sur les lits specialises."},
+            {"Indicateur": "Qualite des Codages", "Valeur": f"{avg_comp:.1f}%", "Note": "Niveau de fiabilite excellent."},
+            {"Indicateur": "Intensite Diagnostique", "Valeur": f"{(len(df_diag)/len(df_sej)):.1f} codes/sej", "Note": "Complexite des soins confirmee."}
+        ])
+        st.table(sej_insights_df)
 
 with tab_ml:
     st.markdown("## Previsions de Charge Hospitaliere")
