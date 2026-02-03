@@ -751,20 +751,26 @@ with tab_sim:
             m_col1.metric("Baseline Modèle", f"{avg_predicted:.1f}/j")
             m_col2.metric("Charge Simulée", f"{stress_load:.1f}/j", delta=f"+{intensite}%", delta_color="inverse")
             
-            # Data Unpacking
-            df_lits, df_perso, _, df_stocks = get_logistique_data()
+            # Data Unpacking & Real-time Filtering
+            df_lits_raw, df_perso_raw, _, df_stocks_raw = get_logistique_data()
+            latest_date = df_perso_raw['date'].max()
+            
+            df_lits = df_lits_raw[df_lits_raw['date'] == latest_date]
+            df_perso = df_perso_raw[df_perso_raw['date'] == latest_date]
+            df_stocks = df_stocks_raw[df_stocks_raw['date'] == latest_date]
             
             # Resource Logic
             if "Lits" in ressource_type:
-                total_capacity = df_lits['lits_totaux'].iloc[-10:].sum()
-                occup_base = df_lits['lits_occupes'].iloc[-10:].sum()
+                # Use top 10 poles by capacity for the snapshot
+                total_capacity = df_lits.nlargest(10, 'lits_totaux')['lits_totaux'].sum()
+                occup_base = df_lits.nlargest(10, 'lits_totaux')['lits_occupes'].sum()
                 utilization = (occup_base / total_capacity) * (1 + intensite/200)
                 m_col3.metric("Saturation Lits", f"{min(utilization*100, 100):.1f}%")
                 
                 fig_sim = go.Figure(go.Indicator(
                     mode = "gauge+number",
                     value = min(utilization * 100, 100),
-                    title = {'text': "Indice de Saturation Lits"},
+                    title = {'text': "Indice de Saturation Lits (Instantané)"},
                     gauge = {
                         'axis': {'range': [None, 100]},
                         'bar': {'color': ACCENT_RED if utilization > 0.9 else SECONDARY_BLUE},
@@ -776,24 +782,25 @@ with tab_sim:
                 ))
             elif "Effectif" in ressource_type:
                 total_staff = df_perso['effectif_total'].sum()
-                utilization = (stress_load * 1.5) / (total_staff / 10)
+                # Realistic tension: (Simulated new patients * factor) / available staff
+                utilization = (stress_load * 0.8) / (total_staff / 20) 
                 m_col3.metric("Tension Staff", f"{min(utilization*100, 100):.1f}%")
                 
                 fig_sim = px.bar(df_perso.groupby('categorie')['effectif_total'].sum().reset_index(), 
-                                x='categorie', y='effectif_total', title="Capacité Staff par Catégorie",
+                                x='categorie', y='effectif_total', title=f"Effectifs Réels au {latest_date.strftime('%d/%m/%Y')}",
                                 template="plotly_dark", color_discrete_sequence=[SECONDARY_BLUE])
             else:
                 # Stock Logic
                 depletion_days = 30 / (1 + intensite/100)
                 m_col3.metric("Autonomie Stocks", f"{depletion_days:.1f} Jours")
                 
-                if not df_stocks.empty:
-                    # Filter for top medicines to ensure consistent lengths and avoid Plotly errors
-                    df_viz = df_stocks.copy()
-                    top_meds = df_viz['medicament'].unique()[:5]
+                if not df_stocks_raw.empty:
+                    # For line chart, we use historical data but filter Top 5 meds
+                    df_viz = df_stocks_raw.copy()
+                    top_meds = df_viz[df_viz['date'] == latest_date].nlargest(5, 'conso_jour')['medicament'].tolist()
                     df_viz = df_viz[df_viz['medicament'].isin(top_meds)].sort_values('date')
                     fig_sim = px.line(df_viz, x='date', y='stock_fin', color='medicament', 
-                                     title="Projection Déplétion Stocks (Top 5 Médicaments)",
+                                     title="Historique & Tendance des Stocks Critiques",
                                      template="plotly_dark", color_discrete_sequence=px.colors.qualitative.Safe)
                 else:
                     st.warning("Données de stocks non disponibles.")
