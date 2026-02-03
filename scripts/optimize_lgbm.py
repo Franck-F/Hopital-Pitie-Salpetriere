@@ -11,47 +11,33 @@ dd = df_adm.groupby('date_entree').size().rename('admissions').asfreq('D', fill_
 
 df = pd.DataFrame(index=dd.index)
 df['admissions'] = dd.values
-
-# Advanced Features
-df['day'] = df.index.dayofweek
-df['is_weekend'] = (df.day >= 5).astype(int)
 df['month'] = df.index.month
-df['week'] = df.index.isocalendar().week.astype(int)
+df['day'] = df.index.dayofweek
+df['is_winter'] = df['month'].isin([11, 12, 1, 2]).astype(int)
 
-# Lags & Diffs
 for l in [1, 2, 7, 14]:
     df[f'lag_{l}'] = df['admissions'].shift(l)
-df['diff_1'] = df['lag_1'] - df['lag_2']
-df['diff_7'] = df['lag_1'] - df['lag_7']
-
-# Rolling Stats
-for w in [7, 14]:
+for w in [7, 28]:
     df[f'mean_{w}'] = df['admissions'].shift(1).rolling(window=w).mean()
     df[f'std_{w}'] = df['admissions'].shift(1).rolling(window=w).std()
-
-# Target encoding (categorical smooth)
-df['day_avg'] = df.groupby('day')['admissions'].transform(lambda x: x.shift(1).expanding().mean())
 
 df = df.dropna()
 X = df.drop('admissions', axis=1)
 y = df['admissions']
 
-train_size = int(len(X) * 0.9)
-X_train, X_test = X.iloc[:train_size], X.iloc[train_size:]
-y_train, y_test = y.iloc[:train_size], y.iloc[train_size:]
+# Test on last 90 days (Quarter 4)
+test_days = 90
+X_train, X_test = X.iloc[:-test_days], X.iloc[-test_days:]
+y_train, y_test = y.iloc[:-test_days], y.iloc[-test_days:]
 
-# Fast Optimization
 param_dist = {
-    'num_leaves': [31, 63, 150, 255],
-    'learning_rate': [0.01, 0.05],
+    'num_leaves': [31, 63, 127],
+    'learning_rate': [0.01, 0.05, 0.1],
     'n_estimators': [1000, 2000],
-    'min_child_samples': [5, 10, 20],
-    'feature_fraction': [0.7, 0.9],
-    'bagging_fraction': [0.7, 0.9],
-    'bagging_freq': [5]
+    'feature_fraction': [0.8, 0.9]
 }
 
-tscv = TimeSeriesSplit(n_splits=3)
+tscv = TimeSeriesSplit(n_splits=4)
 rs = RandomizedSearchCV(
     lgb.LGBMRegressor(objective='regression_l1', random_state=42, verbose=-1),
     param_distributions=param_dist,
@@ -65,4 +51,4 @@ rs.fit(X_train, y_train)
 preds = rs.best_estimator_.predict(X_test)
 mae = mean_absolute_error(y_test, preds)
 
-print(f"RES|MAE:{mae:.2f}|PARAMS:{rs.best_params_}")
+print(f"SEASONAL|MAE:{mae:.2f}|PARAMS:{rs.best_params_}")
