@@ -28,7 +28,7 @@ def render_ml(df_daily, model_lgbm):
         rmse = np.sqrt(mean_squared_error(y_eval, y_pred_eval))
         r2 = r2_score(y_eval, y_pred_eval)
         
-        st.markdown(f"### Performance Test (Sept-Dec 2025) <span style='font-size:0.8em; color:gray'>(v6.1)</span>", unsafe_allow_html=True)
+        st.markdown(f"### Performance Test (Sept-Dec 2025) <span style='font-size:0.8em; color:gray'></span>", unsafe_allow_html=True)
         c1, c2, c3 = st.columns(3)
         c1.metric("MAE (Erreur Moyenne)", f"{mae:.2f}", delta="-0.8 (vs. Baseline)", delta_color="inverse")
         c2.metric("RMSE", f"{rmse:.2f}")
