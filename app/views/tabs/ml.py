@@ -9,7 +9,7 @@ from utils import create_features_vectorized, predict_future_admissions
 
 
 def render_ml(df_daily, model_lgbm):
-    st.markdown("Moteur predictif **LightGBM Champion** (Performance Maximale).")
+    st.markdown("Moteur predictif **LightGBM**.")
     
     if model_lgbm:
         # 1. Evaluation Historique (Identique Notebook)
@@ -37,9 +37,9 @@ def render_ml(df_daily, model_lgbm):
         # Plot Evaluation
         df_eval_plot = pd.DataFrame({'Reel': y_eval, 'Predit': y_pred_eval}, index=y_eval.index)
         fig_eval = go.Figure()
-        fig_eval.add_trace(go.Scatter(x=df_eval_plot.index, y=df_eval_plot['Reel'], mode='lines', name='Reel', line=dict(color='gray', width=1, dash='dot')))
-        fig_eval.add_trace(go.Scatter(x=df_eval_plot.index, y=df_eval_plot['Predit'], mode='lines', name='Digital Twin (V6)', line=dict(color=SECONDARY_BLUE, width=2)))
-        fig_eval.update_layout(title="Reel vs Digital Twin (Validation 4 mois)", template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        fig_eval.add_trace(go.Scatter(x=df_eval_plot.index, y=df_eval_plot['Reel'], mode='lines', name='Reel', line=dict(color='red', width=1)))
+        fig_eval.add_trace(go.Scatter(x=df_eval_plot.index, y=df_eval_plot['Predit'], mode='lines', name='Predit', line=dict(color=SECONDARY_BLUE, width=2, dash='dot')))
+        fig_eval.update_layout(title="Reel vs Predit", template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_eval, use_container_width=True)
 
         st.divider()

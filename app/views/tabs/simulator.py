@@ -56,7 +56,7 @@ def render_simulator(daily_ts, model_lgbm):
         st.divider()
         
         intensite = st.slider(
-            "Intensite du Choc (%)",
+            "Intensite du pic (%)",
             0, 100, default_intensity,
             help="Augmentation prevue du flux d'admissions"
         )
