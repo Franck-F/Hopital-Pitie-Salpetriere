@@ -48,6 +48,7 @@ Requires-Dist: lightgbm>=4.0.0; extra == "ml"
 
 ## Overview
 
+![https://hopital-pitie-salpetrieregit-jsfpemvrjtde9tma3f7yq6.streamlit.app/](image.png)
 Ce projet vise à développer un système de prévision et de gestion des ressources pour l'Hôpital Pitié-Salpêtrière. Il permet d'anticiper les pics d'activité, d'optimiser l'allocation des lits et du personnel, et de fournir un tableau de bord interactif pour les décideurs hospitaliers.
 
 ## Objectifs
