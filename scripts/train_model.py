@@ -61,26 +61,28 @@ FEATURES = ['month_sin', 'month_cos', 'day_sin', 'day_cos', 'is_holiday', 'days_
             'roll_mean_3', 'roll_mean_7', 'roll_max_7', 'roll_min_7', 'roll_std_7']
 TARGET = 'admissions'
 
-X = features_df[FEATURES]
-y = features_df[TARGET]
+# 1. Formal Train/Test Split (Hold-out Test set = last 30 days)
+train_df = features_df.iloc[:-30]
+test_df = features_df.iloc[-30:]
 
-# XGBoost Optimization with GridSearchCV
-# Squarederror for lower MAE and extreme boosting
+X_train, y_train = train_df[FEATURES], train_df[TARGET]
+X_test, y_test = test_df[FEATURES], test_df[TARGET]
+
+# 2. XGBoost Optimization with TimeSeries Cross-Validation
+# We optimize on the train set using internal validation folds
 xgb_model = xgb.XGBRegressor(objective='reg:squarederror', random_state=42)
 
 param_grid = {
-    'n_estimators': [2000],
+    'n_estimators': [1000, 2000],
     'learning_rate': [0.01, 0.05],
-    'max_depth': [12, 15],
+    'max_depth': [10, 12],
     'subsample': [0.9],
-    'colsample_bytree': [0.9],
-    'gamma': [0],
-    'reg_alpha': [0],
-    'reg_lambda': [1]
+    'gamma': [0.1]
 }
-# 2 * 2 * 2 * 2 * 2 = 32 candidates * 5 folds = 160 fits. Manageable.
 
+# TimeSeriesSplit for Cross-Validation (standard for temporal data)
 tscv = TimeSeriesSplit(n_splits=5)
+
 grid_search = GridSearchCV(
     estimator=xgb_model,
     param_grid=param_grid,
@@ -90,15 +92,20 @@ grid_search = GridSearchCV(
     n_jobs=-1
 )
 
-grid_search.fit(X, y)
+print("Starting Nested Cross-Validation...")
+grid_search.fit(X_train, y_train)
 best_xgb = grid_search.best_estimator_
 
 print(f"Best Parameters found: {grid_search.best_params_}")
+
+# 3. Final Evaluation on Hold-out Test
+y_pred = best_xgb.predict(X_test)
+test_mae = mean_absolute_error(y_test, y_pred)
 
 # Save Optimized Model
 os.makedirs('models', exist_ok=True)
 joblib.dump(best_xgb, 'models/xgboost_optimized_v1.joblib')
 
-print("Optimized XGBoost Model saved to models/xgboost_optimized_v1.joblib")
-final_mae = mean_absolute_error(y, best_xgb.predict(X))
-print(f"Final Optimization MAE: {final_mae:.2f}")
+print("Final Optimized XGBoost Model saved to models/xgboost_optimized_v1.joblib")
+print(f"Final Cross-Val MAE (Best): {-grid_search.best_score_:.2f}")
+print(f"Final Hold-out Test MAE (Dec): {test_mae:.2f}")
