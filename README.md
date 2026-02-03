@@ -1,15 +1,14 @@
 # Hôpital Pitié-Salpêtrière : Système de Prévision et de Gestion des Ressources
 
+[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.53.1-FF4B4B.svg?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Aperçu Application](app/assets/demo_screenshot.png)](https://hopital-pitie-salpetrieregit-jsfpemvrjtde9tma3f7yq6.streamlit.app/)
+
 ## Overview
 
-Ce projet déploie un système de prévision avancé pour l'Hôpital Pitié-Salpêtrière (Vision 2024-2025). Il est centré sur un modèle de "Jumeau Numérique" (Digital Twin) capable de reproduire la dynamique des admissions avec une précision quasi-absolue.
-
-## Objectifs Atteints
-
-- **Vision 2024-2025** : Couverture complète de la période historique récente.
-- **Digital Twin V6** : Modèle LightGBM "Full Fit" atteignant une MAE < 1.0.
-- **Robustesse** : Suppression des artefacts non pertinents et optimisation pour la prise de décision réelle.
-- **Dashboard Opérationnel** : Interface Streamlit épurée pour le pilotage stratégique.
+Ce projet déploie un système de prévision avancé pour l'Hôpital Pitié-Salpêtrière...
 
 ## Stack Technique
 
@@ -23,9 +22,9 @@ Ce projet déploie un système de prévision avancé pour l'Hôpital Pitié-Salp
 ## Structure du Projet
 
 - `data/` : Dataset unifié `admissions_hopital_pitie_2024_2025.csv`.
-- `notebooks/` : Notebook unique de référence `LigthGBM.ipynb` (V6).
-- `models/` : Modèle Champion `lightgbm_final_v6_2425.joblib` uniquement.
-- `scripts/` : Script de ré-entraînement `train_champion_model.py`.
+- `notebooks/` : Notebook unique de référence `LigthGBM.ipynb` .
+- `models/` : Modèle  `lightgbm_final.joblib`.
+- `scripts/` : Script de ré-entraînement `train_model.py`.
 - `app/` : Application de pilotage.
 - `reports/` : Documentation technique et conception.
 
