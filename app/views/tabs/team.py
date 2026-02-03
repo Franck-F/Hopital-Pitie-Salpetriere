@@ -202,7 +202,7 @@ def render_team():
             <div style='padding: 20px; background: rgba(0,210,255,0.05); border-radius: 12px; border-left: 4px solid {SECONDARY_BLUE};'>
                 <h4 style='margin: 0 0 10px 0; color: {SECONDARY_BLUE};'>Previsions ML</h4>
                 <p style='margin: 0; color: #8899A6; line-height: 1.6;'>
-                    Modele LightGBM optimise pour predictions a 14 jours avec MAE < 1.0.
+                    Modele LightGBM optimise pour predictions a 14 jours
                 </p>
             </div>
         """, unsafe_allow_html=True)
@@ -235,13 +235,8 @@ def render_team():
     
     # Footer
     st.markdown(f"""
-        <div style='text-align: center; padding: 30px; background: linear-gradient(135deg, rgba(0,91,161,0.1) 0%, rgba(0,210,255,0.05) 100%); 
-                    border-radius: 20px; border: 1px solid rgba(0,210,255,0.2);'>
             <p style='margin: 0; font-size: 1.1rem; color: {SECONDARY_BLUE}; font-weight: 600;'>
                 Projet Vision 2026 - Hopital Pitie-Salpetriere
             </p>
-            <p style='margin: 10px 0 0 0; color: #8899A6;'>
-                Developpe par  Franck - Charlotte - Gaetan - Djouhra - Farah
-            </p>
-        </div>
+            
     """, unsafe_allow_html=True)
