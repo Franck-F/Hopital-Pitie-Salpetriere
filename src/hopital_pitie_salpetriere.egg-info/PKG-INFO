@@ -15,22 +15,17 @@ Classifier: Programming Language :: Python :: 3.13
 Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
 Requires-Python: >=3.13
 Description-Content-Type: text/markdown
-Requires-Dist: faker>=40.1.2
 Requires-Dist: numpy>=2.4.2
 Requires-Dist: pandas>=2.3.3
 Requires-Dist: plotly>=6.5.2
 Requires-Dist: pytest>=9.0.2
 Requires-Dist: scikit-learn>=1.8.0
-Requires-Dist: statsmodels>=0.14.6
 Requires-Dist: streamlit>=1.53.1
-Requires-Dist: xgboost>=3.1.3
 Requires-Dist: joblib>=1.3.0
 Requires-Dist: matplotlib>=3.10.8
 Requires-Dist: seaborn>=0.13.2
-Requires-Dist: summarytools>=0.3.0
 Requires-Dist: nbformat>=5.10.4
 Requires-Dist: lightgbm>=4.6.0
-Requires-Dist: shap>=0.44.0
 Provides-Extra: dev
 Requires-Dist: pytest>=9.0.2; extra == "dev"
 Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
@@ -41,34 +36,36 @@ Provides-Extra: ml
 Requires-Dist: prophet>=1.3.0; extra == "ml"
 Requires-Dist: lightgbm>=4.0.0; extra == "ml"
 
-# Hopital Pitie-Salpetriere : Systeme de Prevision et de Gestion des Ressources
+# Hôpital Pitié-Salpêtrière : Système de Prévision et de Gestion des Ressources
+
+[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.53.1-FF4B4B.svg?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![LightGBM](https://img.shields.io/badge/lightgbm-FF4B4B.svg?style=flat&logo=streamlit&logoColor=white)](https://lightgbm.com.)
+---
+
+[![Aperçu Application](app/assets/demo_screenshot.png)](https://hopital-pitie-salpetrieregit-jsfpemvrjtde9tma3f7yq6.streamlit.app/)
 
 ## Overview
 
-Ce projet deploie un systeme de prevision avance pour l'Hopital Pitie-Salpetriere (Vision 2024-2025). Il est centre sur un modele de "Jumeau Numerique" (Digital Twin) capable de reproduire la dynamique des admissions avec une precision quasi-absolue.
-
-## Objectifs Atteints
-
-- **Vision 2024-2025** : Couverture complete de la periode historique recente.
-- **Digital Twin V6** : Modele LightGBM "Full Fit" atteignant une MAE < 1.0.
-- **Robustesse** : Suppression des artefacts non pertinents et optimisation pour la prise de decision reelle.
-- **Dashboard Operationnel** : Interface Streamlit epuree pour le pilotage strategique.
+Ce projet vise à développer un système de prévision et de gestion des ressources pour l'Hôpital Pitié-Salpêtrière. Il permet d'anticiper les photos d'activité, d'optimiser l'allocation des lits et du personnel, et de fournir un tableau de bord interactif pour les décideurs hospitaliers.
 
 ## Stack Technique
 
 - **Gestion** : `uv`
 - **Langage** : Python 3.13+
 - **Core** : `pandas`, `numpy`, `joblib`
-- **Modelisation** : `lightgbm` (Champion V6), `scikit-learn`
+- **Modélisation** : `lightgbm` (Champion V6), `scikit-learn`
 - **Visualisation** : `plotly`
 - **Application** : `streamlit`
 
 ## Structure du Projet
 
-- `data/` : Dataset unifie `admissions_hopital_pitie_2024_2025.csv`.
-- `notebooks/` : Notebook unique de reference `LigthGBM.ipynb` (V6).
-- `models/` : Modele Champion `lightgbm_final_v6_2425.joblib` uniquement.
-- `scripts/` : Script de re-entrainement `train_champion_model.py`.
+- `data/` : Dataset unifié `admissions_hopital_pitie_2024_2025.csv`.
+- `notebooks/` : Notebook unique de référence `LigthGBM.ipynb` .
+- `models/` : Modèle  `lightgbm_final.joblib`.
+- `scripts/` : Script de ré-entraînement `train_model.py`.
 - `app/` : Application de pilotage.
 - `reports/` : Documentation technique et conception.
 
@@ -94,3 +91,4 @@ uv run streamlit run app/main.py
 - [@koffigaetan-adj](https://github.com/koffigaetan-adj)
 - [@Djouhratabet](https://github.com/Djouhratabet)
 - [@cmartineau15](https://github.com/cmartineau15)
+- [@farah2791](https://github.com/farah2791)
