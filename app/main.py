@@ -412,7 +412,8 @@ with tab_exp:
         # --- Temporal Analysis ---
         st.divider()
         st.markdown("### Tendances et Saisonnalité (Série Temporelle)")
-        daily_series = daily_stats.asfreq('D', fill_value=0)
+        daily_ts = df_adm.groupby('date_entree').size().rename('admissions')
+        daily_series = daily_ts.asfreq('D', fill_value=0)
         decomposition = seasonal_decompose(daily_series, model='additive', period=7)
         
         fig_temp = make_subplots(rows=4, cols=1, 
@@ -445,20 +446,6 @@ with tab_exp:
             fig_heat_adm.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_heat_adm, use_container_width=True)
 
-        # --- Anomaly Detection ---
-        st.divider()
-        st.markdown("### Detection d'Anomalies (Pics Hors-Normes)")
-        Q1, Q3 = daily_stats.quantile(0.25), daily_stats.quantile(0.75)
-        IQR = Q3 - Q1
-        upper_b = Q3 + 1.5 * IQR
-        outliers = daily_stats[daily_stats > upper_b]
-        
-        fig_out_adm = go.Figure()
-        fig_out_adm.add_trace(go.Scatter(x=daily_stats.index, y=daily_stats.values, mode='markers', name='Normal', marker=dict(color=SECONDARY_BLUE, size=4)))
-        fig_out_adm.add_trace(go.Scatter(x=outliers.index, y=outliers.values, mode='markers', name='Anomalie', marker=dict(color=ACCENT_RED, size=8, symbol='x')))
-        fig_out_adm.add_hline(y=upper_b, line_dash="dash", line_color=ACCENT_RED, annotation_text="Seuil IQR")
-        fig_out_adm.update_layout(title="Identification des Pics", template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig_out_adm, use_container_width=True)
 
         # --- Sunburst Motifs ---
         st.divider()
