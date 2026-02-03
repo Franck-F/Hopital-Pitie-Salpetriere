@@ -24,6 +24,12 @@ def create_features(df):
     df['day_sin'] = np.sin(2 * np.pi * df.index.dayofweek / 7)
     df['day_cos'] = np.cos(2 * np.pi * df.index.dayofweek / 7)
     
+    # Holiday feature (Hardcoded French 2024 for simplicity)
+    holidays = ['2024-01-01', '2024-04-01', '2024-05-01', '2024-05-08', 
+                '2024-05-09', '2024-05-20', '2024-07-14', '2024-08-15', 
+                '2024-11-01', '2024-11-11', '2024-12-25']
+    df['is_holiday'] = df.index.strftime('%Y-%m-%d').isin(holidays).astype(int)
+    
     df['dayofyear'] = df.index.dayofyear
     df['weekofyear'] = df.index.isocalendar().week.astype(int)
     
@@ -40,7 +46,7 @@ def create_features(df):
 
 features_df = create_features(daily_data).dropna()
 
-FEATURES = ['month_sin', 'month_cos', 'day_sin', 'day_cos', 'dayofyear', 
+FEATURES = ['month_sin', 'month_cos', 'day_sin', 'day_cos', 'is_holiday', 'dayofyear', 
             'weekofyear', 'lag1', 'lag7', 'lag14', 'roll_mean_7', 'roll_std_7']
 TARGET = 'admissions'
 
@@ -48,14 +54,16 @@ X = features_df[FEATURES]
 y = features_df[TARGET]
 
 # XGBoost Optimization with GridSearchCV
-xgb_model = xgb.XGBRegressor(objective='reg:squarederror')
+# Poisson objective for counts and more depth
+xgb_model = xgb.XGBRegressor(objective='count:poisson', random_state=42)
 
 param_grid = {
-    'n_estimators': [500, 1000],
-    'learning_rate': [0.01, 0.05, 0.1],
-    'max_depth': [3, 5, 7],
-    'subsample': [0.8, 1.0],
-    'colsample_bytree': [0.8, 1.0]
+    'n_estimators': [1000],
+    'learning_rate': [0.01, 0.05],
+    'max_depth': [6, 10],
+    'subsample': [0.8],
+    'colsample_bytree': [0.8],
+    'gamma': [0.1]
 }
 
 tscv = TimeSeriesSplit(n_splits=5)
