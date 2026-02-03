@@ -240,17 +240,26 @@ def predict_future_admissions(df_daily, model, days=14):
                 '2024-11-01', '2024-11-11', '2024-12-25']
     holiday_dates = pd.to_datetime(holidays)
     
+    # Reference holidays for distance calculation
+    holidays = pd.to_datetime(['2024-01-01', '2024-04-01', '2024-05-01', '2024-05-08', 
+                             '2024-05-09', '2024-05-20', '2024-07-14', '2024-08-15', 
+                             '2024-11-01', '2024-11-11', '2024-12-25'])
+    
     for i in range(1, days + 1):
         next_date = last_date + timedelta(days=i)
         future_dates.append(next_date)
         
-        # Features for next date - EXACT MATCH WITH CHAMPION MODEL
+        # Features for next date - EXACT MATCH WITH lightgbm_final_v2.joblib
         row = pd.DataFrame(index=[next_date])
+        row['day'] = next_date.dayofweek
+        row['month'] = next_date.month
         row['lag1'] = current_ts.iloc[-1]
         row['lag2'] = current_ts.iloc[-2] if len(current_ts) >= 2 else current_ts.iloc[-1]
         row['lag7'] = current_ts.iloc[-7] if len(current_ts) >= 7 else current_ts.iloc[-1]
+        row['is_holiday'] = 1 if next_date in holidays else 0
+        row['dist_holiday'] = (holidays[holidays >= next_date].min() - next_date).days if any(holidays >= next_date) else 365
         
-        FEATS = ['lag1', 'lag2', 'lag7']
+        FEATS = ['day', 'month', 'lag1', 'lag2', 'lag7', 'is_holiday', 'dist_holiday']
         X_row = row[FEATS]
         
         # LightGBM Champion Prediction
@@ -742,20 +751,20 @@ with tab_ml:
             st.write("**Architecture** : Utilisation exclusive des retards temporels (Lags) pour capturer la dynamique interne des admissions.")
         
         with st.expander("Importance des Variables"):
-            FEATS = ['lag1', 'lag2', 'lag7']
+            FEATS = ['day', 'month', 'lag1', 'lag2', 'lag7', 'is_holiday', 'dist_holiday']
             
             if len(FEATS) == len(model_lgbm.feature_importances_):
                 importance = pd.DataFrame({'feature': FEATS, 'importance': model_lgbm.feature_importances_}).sort_values('importance', ascending=True)
                 fig_imp = px.bar(importance, x='importance', y='feature', orientation='h', template='plotly_dark', color='importance', color_continuous_scale='Blues')
-                fig_imp.update_layout(height=300, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+                fig_imp.update_layout(height=400, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
                 st.plotly_chart(fig_imp, use_container_width=True)
             else:
                 st.warning(f"Incohérence : Le modèle attend {len(model_lgbm.feature_importances_)} variables.")
             
         with st.expander("Details Techniques du Modele"):
             st.write("Algorithme : LightGBM (Gradient Boosting)")
-            st.write("Variables clefs : Lag 1 (Veille), Lag 2, Lag 7 (Saisonnalite hebdomadaire)")
-            st.info("Le modele privilegie la dynamique de court terme pour une reactivite maximale.")
+            st.write("Variables clefs : Lag 1, Lag 2, Lag 7, Calendrier et Vacances")
+            st.info("Le modele integre le contexte des jours feries pour une meilleure precision en periode de fetes.")
     else:
         st.error("Modele XGBoost non detecte. Veuillez lancer l'entrainement.")
 
