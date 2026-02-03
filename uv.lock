@@ -429,6 +429,7 @@ source = { editable = "." }
 dependencies = [
     { name = "faker" },
     { name = "joblib" },
+    { name = "lightgbm" },
     { name = "matplotlib" },
     { name = "nbformat" },
     { name = "numpy" },
@@ -462,6 +463,7 @@ requires-dist = [
     { name = "faker", specifier = ">=40.1.2" },
     { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "joblib", specifier = ">=1.3.0" },
+    { name = "lightgbm", specifier = ">=4.6.0" },
     { name = "lightgbm", marker = "extra == 'ml'", specifier = ">=4.0.0" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8.0" },
