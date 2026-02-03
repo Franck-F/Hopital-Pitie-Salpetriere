@@ -692,34 +692,79 @@ with tab_ml:
         st.error("Modele XGBoost non detecte. Veuillez lancer l'entrainement.")
 
 with tab_sim:
-    st.markdown("## Simulateur Interactif de Crise")
-    with st.expander("Parametrage du Scenario", expanded=True):
+    st.markdown("## ⚡ Simulateur de Tension Hospitalière")
+    st.markdown("""
+        Ce simulateur utilise les **prévisions du modèle XGBoost** comme baseline et vous permet de tester des scénarios de crise 
+        (ex: épidémie, plan blanc) pour évaluer la résilience des capacités actuelles de la Pitié-Salpêtrière.
+    """)
+    
+    with st.expander("🛠️ Configuration du Scénario de Stress", expanded=True):
         sc_col1, sc_col2 = st.columns(2)
         with sc_col1:
-            intensite = st.slider("Intensite du Pic (%)", 0, 100, 25)
+            intensite = st.slider("Surcroît d'Admissions Prévues (%)", 0, 200, 50, help="Pourcentage s'ajoutant aux prévisions du modèle.")
         with sc_col2:
-            ressource = st.selectbox("Ressource Critique", ["Lits Rea", "Staff Infirmier", "Stocks Medicaux"])
+            ressource_type = st.selectbox("Ressource à Monitorer", 
+                                        ["Capacité en Lits (Rea/Med)", "Effectif Soignant (Infirmiers)", "Stocks de Sécurité (Médicaments)"])
         
-        if st.button("Lancer l'Analyse d'Impact"):
-            if model_xg:
-                daily_ts = df_adm.groupby('date_entree').size().rename('admissions').asfreq('D', fill_value=0)
-                _, future_preds = predict_future_admissions(daily_ts, model_xg)
-                base_adm = future_preds.mean()
-                simulated_adm = base_adm * (1 + intensite/100)
+    if st.button("🚀 Lancer la Simulation d'Impact"):
+        if model_xg and 'df_adm' in locals():
+            # Get model baseline for next 14 days
+            daily_ts = df_adm.groupby('date_entree').size().rename('admissions').asfreq('D', fill_value=0)
+            _, future_preds = predict_future_admissions(daily_ts, model_xg)
+            avg_predicted = future_preds.mean()
+            
+            # Stress calculation
+            stress_load = avg_predicted * (1 + intensite/100)
+            
+            # Display Metrics
+            m_col1, m_col2, m_col3 = st.columns(3)
+            m_col1.metric("Baseline Modèle", f"{avg_predicted:.1f}/j")
+            m_col2.metric("Charge Simulée", f"{stress_load:.1f}/j", delta=f"+{intensite}%", delta_color="inverse")
+            
+            # Resource Logic
+            if "Lits" in ressource_type:
+                df_lits, _, _, _ = get_logistique_data()
+                total_capacity = df_lits['lits_totaux'].iloc[-10:].sum() # Top 10 poles
+                occup_base = df_lits['lits_occupes'].iloc[-10:].sum()
+                utilization = (occup_base / total_capacity) * (1 + intensite/200) # Heuristic
+                m_col3.metric("Saturation Lits", f"{min(utilization*100, 100):.1f}%")
                 
-                st.write(f"Projection d'admissions sous stress : **{simulated_adm:.1f}** par jour")
+                fig_sim = go.Figure(go.Indicator(
+                    mode = "gauge+number",
+                    value = utilization * 100,
+                    title = {'text': "Indice de Saturation Lits"},
+                    gauge = {
+                        'axis': {'range': [None, 120]},
+                        'bar': {'color': ACCENT_RED if utilization > 0.9 else SECONDARY_BLUE},
+                        'steps' : [
+                            {'range': [0, 70], 'color': "rgba(0, 166, 80, 0.2)"},
+                            {'range': [70, 90], 'color': "rgba(255, 127, 14, 0.2)"},
+                            {'range': [90, 120], 'color': "rgba(231, 76, 60, 0.2)"}]
+                    }
+                ))
+            elif "Effectif" in ressource_type:
+                _, df_perso, _, _ = get_logistique_data()
+                total_staff = df_perso['effectif_total'].sum()
+                utilization = (stress_load * 1.5) / (total_staff / 10) # 1 patient for 1.5 staff ratio
+                m_col3.metric("Tension Staff", f"{min(utilization*100, 100):.1f}%")
                 
-                with st.status("Simulation en cours..."):
-                    time.sleep(0.5)
-                    st.write("Calcul des saturations par pole...")
-                    time.sleep(0.5)
-                
-                if simulated_adm > daily_ts.mean() * 1.2:
-                    st.warning(f"Alerte saturation : Le Pole {ressource} depasse le seuil critique pour une hausse de {intensite}%.")
-                else:
-                    st.success("Les ressources actuelles permettent d'absorber ce flux.")
+                fig_sim = px.bar(df_perso.groupby('categorie')['effectif_total'].sum().reset_index(), 
+                                x='categorie', y='effectif_total', title="Capacité Staff par Catégorie")
             else:
-                st.warning("Modele non disponible pour la simulation dynamique.")
+                _, _, _, df_stocks = get_logistique_data()
+                depletion_days = 30 / (1 + intensite/100)
+                m_col3.metric("Autonomie Stocks", f"{depletion_days:.1f} Jours")
+                fig_sim = px.line(df_stocks.head(50), x='date', y='stock_actuel', color='medicament', title="Projection Déplétion Stocks")
+
+            st.plotly_chart(fig_sim, use_container_width=True)
+            
+            if utilization > 0.9 or (ressource_type == "Stocks de Sécurité (Médicaments)" and depletion_days < 7):
+                st.error("⚠️ ALERTE CRITIQUE : Les capacités actuelles ne permettent pas d'absorber ce pic sur la durée.")
+                st.info("Recommandation : Déclenchement du Plan Blanc et rappel des effectifs en congés.")
+            else:
+                st.success("✅ RÉSILIENCE CONFIRMÉE : L'infrastructure peut absorber la charge simulée.")
+        else:
+            st.error("Données ou Modèle ML non chargés. Impossible de simuler.")
 
 with tab_tea:
     st.markdown("<h1 style='text-align:center;'>Equipe Projet Vision 2026</h1>", unsafe_allow_html=True)
