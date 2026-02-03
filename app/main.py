@@ -218,8 +218,8 @@ def get_patient_sejour_data():
     return df_pat, df_sej, df_diag
 
 @st.cache_resource
-def load_xgboost_model():
-    m_path = "models/xgboost_optimized_v1.joblib"
+def load_champion_model():
+    m_path = "models/lightgbm_final_v2.joblib"
     if os.path.exists(m_path):
         return joblib.load(m_path)
     return None
@@ -244,42 +244,17 @@ def predict_future_admissions(df_daily, model, days=14):
         next_date = last_date + timedelta(days=i)
         future_dates.append(next_date)
         
-        # Features for next date
+        # Features for next date - EXACT MATCH WITH CHAMPION MODEL
         row = pd.DataFrame(index=[next_date])
-        row['month_sin'] = np.sin(2 * np.pi * next_date.month / 12)
-        row['month_cos'] = np.cos(2 * np.pi * next_date.month / 12)
-        row['day_sin'] = np.sin(2 * np.pi * next_date.dayofweek / 7)
-        row['day_cos'] = np.cos(2 * np.pi * next_date.dayofweek / 7)
-        
-        row['is_holiday'] = 1 if next_date.strftime('%Y-%m-%d') in holidays else 0
-        row['days_to_holiday'] = (holiday_dates[holiday_dates >= next_date].min() - next_date).days if any(holiday_dates >= next_date) else 365
-        
-        row['dayofyear'] = next_date.timetuple().tm_yday
-        row['dayofyear_sin'] = np.sin(2 * np.pi * row['dayofyear'] / 365)
-        row['dayofyear_cos'] = np.cos(2 * np.pi * row['dayofyear'] / 365)
-        row['weekofyear'] = next_date.isocalendar().week
-        row['dayofmonth'] = next_date.day
-        
-        # Lags from current augmented TS
         row['lag1'] = current_ts.iloc[-1]
         row['lag2'] = current_ts.iloc[-2] if len(current_ts) >= 2 else current_ts.iloc[-1]
         row['lag7'] = current_ts.iloc[-7] if len(current_ts) >= 7 else current_ts.iloc[-1]
-        row['lag14'] = current_ts.iloc[-14] if len(current_ts) >= 14 else current_ts.iloc[-1]
         
-        row['roll_mean_3'] = current_ts.tail(3).mean()
-        row['roll_mean_7'] = current_ts.tail(7).mean()
-        row['roll_max_7'] = current_ts.tail(7).max()
-        row['roll_min_7'] = current_ts.tail(7).min()
-        row['roll_std_7'] = current_ts.tail(7).std()
-        
-        FEATS = ['month_sin', 'month_cos', 'day_sin', 'day_cos', 'is_holiday', 'days_to_holiday', 
-                 'dayofyear_sin', 'dayofyear_cos', 'weekofyear', 'dayofmonth', 'lag1', 'lag2', 'lag7', 'lag14', 
-                 'roll_mean_3', 'roll_mean_7', 'roll_max_7', 'roll_min_7', 'roll_std_7']
-        
+        FEATS = ['lag1', 'lag2', 'lag7']
         X_row = row[FEATS]
         
-        # Single Optimized XGBoost Prediction
-        final_pred = max(0, model.predict(X_row)[0])
+        # LightGBM Champion Prediction
+        final_pred = model.predict(X_row)[0]
         
         preds.append(final_pred)
         # Augment series for next recursive step
@@ -317,7 +292,7 @@ if st.session_state.page == 'landing':
 df_adm = get_admission_data()
 df_lits, df_perso, df_equip, df_stocks = get_logistique_data()
 df_pat, df_sej, df_diag = get_patient_sejour_data()
-model_xg = load_xgboost_model()
+model_lgbm = load_champion_model()
 st.logo(LOGO_PATH, icon_image=LOGO_PATH)
 
 # --- Premium Dashboard Header ---
@@ -543,8 +518,12 @@ with tab_exp:
         lc1, lc2 = st.columns(2)
         
         with lc1:
-            # Capacity with subplots
-            l_fig = make_subplots(rows=2, cols=1, subplot_titles=("Top 10 Poles (Lits Totaux)", "Repartition par Type de Lit"))
+            # Capacity with subplots - FIXING PIE IN SUBPLOTS BUG
+            l_fig = make_subplots(
+                rows=2, cols=1, 
+                subplot_titles=("Top 10 Poles (Lits Totaux)", "Repartition par Type de Lit"),
+                specs=[[{"type": "xy"}], [{"type": "domain"}]]
+            )
             lits_p = df_lits.groupby('service')['lits_totaux'].first().sort_values(ascending=False).head(10)
             l_fig.add_trace(go.Bar(x=lits_p.index, y=lits_p.values, marker_color='steelblue', name='Lits'), row=1, col=1)
             
@@ -730,23 +709,23 @@ with tab_exp:
 
 with tab_ml:
     st.markdown("## Previsions de Charge Hospitaliere")
-    st.markdown("Moteur predictif **XGBoost pur** avec optimisation par GridSearch.")
+    st.markdown("Moteur predictif **LightGBM Champion** (Performance Maximale).")
     
-    if model_xg:
+    if model_lgbm:
         daily_ts = df_adm.groupby('date_entree').size().rename('admissions').asfreq('D', fill_value=0)
-        future_dates, future_preds = predict_future_admissions(daily_ts, model_xg)
+        future_dates, future_preds = predict_future_admissions(daily_ts, model_lgbm)
         
         col_m1, col_m2, col_m3 = st.columns(3)
         with col_m1:
             st.metric("Tendance Prochaine Semaine", f"{future_preds[:7].mean():.1f} adm/j")
         with col_m2:
-            st.metric("Confiance Modele (MAE)", "< 1.0")
+            st.metric("Confiance Modele (MAE)", "67.92")
         with col_m3:
-            st.metric("Status", "Calibre (Performance Max)")
+            st.metric("Status", "Calibre (Champion V2)")
             
         fig_pred = go.Figure()
         fig_pred.add_trace(go.Scatter(x=daily_ts.index[-30:], y=daily_ts.values[-30:], name="Historique Recent", line=dict(color=SECONDARY_BLUE, width=3)))
-        fig_pred.add_trace(go.Scatter(x=future_dates, y=future_preds, name="Projection XGBoost", line=dict(dash='dash', color=ACCENT_RED, width=3)))
+        fig_pred.add_trace(go.Scatter(x=future_dates, y=future_preds, name="Projection LightGBM", line=dict(dash='dash', color=ACCENT_RED, width=3)))
         fig_pred.update_layout(
             template="plotly_dark", 
             height=500, 
@@ -758,29 +737,25 @@ with tab_ml:
         )
         st.plotly_chart(fig_pred, use_container_width=True)
         
-        with st.expander("Optimisation XGBoost via GridSearch"):
-            st.write("Le modele a ete optimise en testant des centaines de combinaisons de parametres (profondeur de l'arbre, taux d'apprentissage, regularisation) pour capturer au mieux les pics d'admissions.")
-            st.write("**Validation Croisee** : Utilisation d'une methode 'TimeSeriesSplit' pour garantir que le modele performe bien sur des donnees futures jamais vues.")
+        with st.expander("Optimisation LightGBM Champion"):
+            st.write("Le modele Champion a ete selectionne pour sa capacite de generalisation superieure sur les donnees du mois de decembre 2024.")
+            st.write("**Architecture** : Utilisation exclusive des retards temporels (Lags) pour capturer la dynamique interne des admissions.")
         
         with st.expander("Importance des Variables"):
-            # Ensure FEATS matches the model's expected input
-            FEATS = ['month_sin', 'month_cos', 'day_sin', 'day_cos', 'is_holiday', 'days_to_holiday', 
-                     'dayofyear_sin', 'dayofyear_cos', 'weekofyear', 'dayofmonth', 'lag1', 'lag2', 'lag7', 'lag14', 
-                     'roll_mean_3', 'roll_mean_7', 'roll_max_7', 'roll_min_7', 'roll_std_7']
+            FEATS = ['lag1', 'lag2', 'lag7']
             
-            # Check if model and FEATS length match
-            if len(FEATS) == len(model_xg.feature_importances_):
-                importance = pd.DataFrame({'feature': FEATS, 'importance': model_xg.feature_importances_}).sort_values('importance', ascending=True)
+            if len(FEATS) == len(model_lgbm.feature_importances_):
+                importance = pd.DataFrame({'feature': FEATS, 'importance': model_lgbm.feature_importances_}).sort_values('importance', ascending=True)
                 fig_imp = px.bar(importance, x='importance', y='feature', orientation='h', template='plotly_dark', color='importance', color_continuous_scale='Blues')
-                fig_imp.update_layout(height=450, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+                fig_imp.update_layout(height=300, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
                 st.plotly_chart(fig_imp, use_container_width=True)
             else:
-                st.warning(f"Incohérence de configuration : Le modèle attend {len(model_xg.feature_importances_)} variables, mais {len(FEATS)} sont définies.")
+                st.warning(f"Incohérence : Le modèle attend {len(model_lgbm.feature_importances_)} variables.")
             
         with st.expander("Details Techniques du Modele"):
-            st.write("Algorithme : XGBoost Regressor (Tuned)")
-            st.write("Variables clefs : Encodage Sin/Cos, Lags adaptatifs, Fenetres mobiles")
-            st.info("Le modele detecte les patterns cycliques pour anticiper les pics de debut de semaine.")
+            st.write("Algorithme : LightGBM (Gradient Boosting)")
+            st.write("Variables clefs : Lag 1 (Veille), Lag 2, Lag 7 (Saisonnalite hebdomadaire)")
+            st.info("Le modele privilegie la dynamique de court terme pour une reactivite maximale.")
     else:
         st.error("Modele XGBoost non detecte. Veuillez lancer l'entrainement.")
 
@@ -799,10 +774,10 @@ with tab_sim:
                                         ["Capacité en Lits (Rea/Med)", "Effectif Soignant (Infirmiers)", "Stocks de Sécurité (Médicaments)"])
         
     if st.button("Lancer la Simulation d'Impact"):
-        if model_xg and 'df_adm' in locals():
+        if model_lgbm and 'df_adm' in locals():
             # Get model baseline for next 14 days
             daily_ts = df_adm.groupby('date_entree').size().rename('admissions').asfreq('D', fill_value=0)
-            _, future_preds = predict_future_admissions(daily_ts, model_xg)
+            _, future_preds = predict_future_admissions(daily_ts, model_lgbm)
             avg_predicted = future_preds.mean()
             
             # Stress calculation
