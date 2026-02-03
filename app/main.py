@@ -57,18 +57,37 @@ st.markdown(f"""
         background-attachment: fixed;
     }}
 
-    /* Radical Streamlit UI Cleaning */
-    header[data-testid="stHeader"], [data-testid="stDecoration"] {{
+    /* Better Header handling for sidebar toggle */
+    header[data-testid="stHeader"] {{
+        background: transparent !important;
+    }}
+    
+    [data-testid="stDecoration"] {{
         display: none !important;
-        height: 0px !important;
     }}
     
     [data-testid="stAppViewContainer"] {{
-        padding-top: 1rem !important;
+        margin-top: -50px; /* Offset the header height */
     }}
 
     .main .block-container {{
-        padding-top: 1rem !important;
+        padding-top: 3rem !important;
+    }}
+
+    /* Responsive adjustments */
+    @media (max-width: 900px) {{
+        .hero-container {{
+            flex-direction: column !important;
+            text-align: center;
+            max-height: none !important;
+            padding-bottom: 50px;
+        }}
+        .wow-title {{
+            font-size: 2.5rem !important;
+        }}
+        .wow-sub {{
+            font-size: 1.1rem !important;
+        }}
     }}
 
     /* Global Button Styling */
@@ -316,7 +335,17 @@ st.markdown(f"""
 with st.sidebar:
     st.markdown("<h2 style='color:#f0f4f8;'>Vision 2026</h2>", unsafe_allow_html=True)
     st.divider()
-    st.selectbox("Focus Intelligence", ["Activité Globale", "Alertes Pics", "Optimisation Services"])
+    focus = st.selectbox("Focus Intelligence", ["Activité Globale", "Alertes Pics", "Optimisation Services"])
+    st.divider()
+    
+    # Custom Sidebar Content
+    if focus == "Alertes Pics":
+        st.error("3 alertes détectées")
+        st.info("Pic prévu : Lundi prochain (+15%)")
+    elif focus == "Optimisation Services":
+        st.success("Staff : Optimisé")
+        st.warning("Lits : Tension en Réa")
+    
     st.divider()
     if st.button("Quitter le Dashboard"):
         st.session_state.page = 'landing'
@@ -706,7 +735,7 @@ with tab_sim:
             ressource_type = st.selectbox("Ressource à Monitorer", 
                                         ["Capacité en Lits (Rea/Med)", "Effectif Soignant (Infirmiers)", "Stocks de Sécurité (Médicaments)"])
         
-    if st.button("🚀 Lancer la Simulation d'Impact"):
+    if st.button("Lancer la Simulation d'Impact"):
         if model_xg and 'df_adm' in locals():
             # Get model baseline for next 14 days
             daily_ts = df_adm.groupby('date_entree').size().rename('admissions').asfreq('D', fill_value=0)
@@ -785,10 +814,10 @@ with tab_sim:
                 is_critical = True
                 
             if is_critical:
-                st.error("⚠️ ALERTE CRITIQUE : Les capacités actuelles ne permettent pas d'absorber ce pic sur la durée.")
+                st.error("ALERTE CRITIQUE : Les capacités actuelles ne permettent pas d'absorber ce pic sur la durée.")
                 st.info("Recommandation : Déclenchement du Plan Blanc et rappel des effectifs en congés.")
             else:
-                st.success("✅ RÉSILIENCE CONFIRMÉE : L'infrastructure peut absorber la charge simulée.")
+                st.success("RÉSILIENCE CONFIRMÉE : L'infrastructure peut absorber la charge simulée.")
         else:
             st.error("Données ou Modèle ML non chargés. Impossible de simuler.")
 
