@@ -26,7 +26,7 @@ def render_simulator(daily_ts, model_lgbm):
     col_params, col_preview = st.columns([1, 1.5])
     
     with col_params:
-        st.markdown("### ⚙️ Configuration du Scenario")
+        st.markdown("### Configuration du Scenario")
         
         # Type de crise
         scenario_type = st.selectbox(
@@ -76,7 +76,7 @@ def render_simulator(daily_ts, model_lgbm):
         st.divider()
         
         run_button = st.button(
-            "🚀 LANCER LA SIMULATION",
+            "LANCER LA SIMULATION",
             use_container_width=True,
             type="primary"
         )
@@ -91,7 +91,7 @@ def render_simulator(daily_ts, model_lgbm):
             }
     
     with col_preview:
-        st.markdown("### 📊 Apercu des Parametres")
+        st.markdown("### Apercu des Parametres")
         
         # Jauge d'intensite visuelle
         fig_gauge = go.Figure(go.Indicator(
@@ -142,7 +142,7 @@ def render_simulator(daily_ts, model_lgbm):
         st.markdown(f"""
             <div style='background: linear-gradient(135deg, rgba(0,210,255,0.1) 0%, rgba(0,91,161,0.1) 100%); 
                         border-radius: 20px; padding: 20px; border: 1px solid rgba(0,210,255,0.3); margin-bottom: 30px;'>
-                <h2 style='margin: 0; color: {SECONDARY_BLUE};'>📈 Resultats de Simulation : {scenario_type}</h2>
+                <h2 style='margin: 0; color: {SECONDARY_BLUE};'> Resultats de Simulation : {scenario_type}</h2>
             </div>
         """, unsafe_allow_html=True)
         
@@ -367,7 +367,7 @@ def render_simulator(daily_ts, model_lgbm):
             st.markdown(f"""
                 <div style='background: linear-gradient(135deg, rgba(200,16,46,0.2) 0%, rgba(255,0,0,0.1) 100%); 
                             border-radius: 20px; padding: 30px; border: 2px solid {ACCENT_RED}; margin-top: 30px;'>
-                    <h2 style='margin: 0 0 15px 0; color: {ACCENT_RED};'>⚠️ PLAN BLANC RECOMMANDE</h2>
+                    <h2 style='margin: 0 0 15px 0; color: {ACCENT_RED};'>PLAN BLANC RECOMMANDE</h2>
                     <p style='font-size: 1.1rem; margin: 0; color: #f0f4f8;'>
                         Les seuils de securite sont depasses par le scenario simule. Activation des procedures d'urgence conseillee.
                     </p>
@@ -377,7 +377,7 @@ def render_simulator(daily_ts, model_lgbm):
             st.markdown(f"""
                 <div style='background: linear-gradient(135deg, rgba(0,210,255,0.2) 0%, rgba(0,255,0,0.1) 100%); 
                             border-radius: 20px; padding: 30px; border: 2px solid {SECONDARY_BLUE}; margin-top: 30px;'>
-                    <h2 style='margin: 0 0 15px 0; color: {SECONDARY_BLUE};'>✅ RESILIENCE CONFIRMEE</h2>
+                    <h2 style='margin: 0 0 15px 0; color: {SECONDARY_BLUE};'> RESILIENCE CONFIRMEE</h2>
                     <p style='font-size: 1.1rem; margin: 0; color: #f0f4f8;'>
                         Le systeme peut absorber la charge simulee avec les ressources actuelles. Situation gerable.
                     </p>

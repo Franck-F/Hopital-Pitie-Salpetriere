@@ -35,9 +35,9 @@ def render_team():
         st.markdown(f"""
             <div style='background: rgba(255,255,255,0.05); border-radius: 15px; padding: 25px; border: 1px solid rgba(255,255,255,0.1);'>
                 <h3 style='margin: 0 0 15px 0; color: {SECONDARY_BLUE};'>Contact</h3>
-                <p style='margin: 5px 0;'>📧 <strong>dsi@aphp.fr</strong></p>
-                <p style='margin: 5px 0;'>🏥 <strong>AP-HP Pitie-Salpetriere</strong></p>
-                <p style='margin: 5px 0;'>📍 <strong>Paris, France</strong></p>
+                <p style='margin: 5px 0;'><a href='mailto:pitié-salpetriere@vision.fr'><strong>pitié-salpetriere@vision.fr</strong></a></p>
+                <p style='margin: 5px 0;'><a href='https://hopital-pitie-salpetrieregit-jsfpemvrjtde9tma3f7yq6.streamlit.app/'><strong>AP-HP Pitie-Salpetriere</strong></a></p>
+                <p style='margin: 5px 0;'><strong>Paris, France</strong></p>
             </div>
         """, unsafe_allow_html=True)
     
@@ -62,7 +62,7 @@ def render_team():
     # Section Projet
     st.markdown("<div style='background: rgba(255,255,255,0.03); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px;'>", unsafe_allow_html=True)
     
-    st.markdown("## 📊 Caracteristiques du Projet")
+    st.markdown("## Caracteristiques du Projet")
     
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
     
@@ -107,7 +107,7 @@ def render_team():
     # Section Stack Technique
     st.markdown("<div style='background: rgba(255,255,255,0.03); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px;'>", unsafe_allow_html=True)
     
-    st.markdown("## 🛠️ Stack Technique")
+    st.markdown("## Stack Technique")
     
     tech_col1, tech_col2, tech_col3 = st.columns(3)
     
@@ -179,28 +179,28 @@ def render_team():
     # Section Fonctionnalites
     st.markdown("<div style='background: rgba(255,255,255,0.03); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px;'>", unsafe_allow_html=True)
     
-    st.markdown("## ⚡ Fonctionnalites Principales")
+    st.markdown("## Fonctionnalites Principales")
     
     feat_col1, feat_col2 = st.columns(2)
     
     with feat_col1:
         st.markdown(f"""
             <div style='margin-bottom: 15px; padding: 20px; background: rgba(0,210,255,0.05); border-radius: 12px; border-left: 4px solid {SECONDARY_BLUE};'>
-                <h4 style='margin: 0 0 10px 0; color: {SECONDARY_BLUE};'>📊 Tableau de Bord Temps Reel</h4>
+                <h4 style='margin: 0 0 10px 0; color: {SECONDARY_BLUE};'>Tableau de Bord Temps Reel</h4>
                 <p style='margin: 0; color: #8899A6; line-height: 1.6;'>
                     Visualisation des flux d'admissions quotidiens avec metriques cles et tendances.
                 </p>
             </div>
             
             <div style='margin-bottom: 15px; padding: 20px; background: rgba(0,210,255,0.05); border-radius: 12px; border-left: 4px solid {SECONDARY_BLUE};'>
-                <h4 style='margin: 0 0 10px 0; color: {SECONDARY_BLUE};'>🔍 Exploration Data Avancee</h4>
+                <h4 style='margin: 0 0 10px 0; color: {SECONDARY_BLUE};'>Data Exploration Avancee</h4>
                 <p style='margin: 0; color: #8899A6; line-height: 1.6;'>
                     Analyse multi-dimensionnelle des admissions, logistique et parcours patients.
                 </p>
             </div>
             
             <div style='padding: 20px; background: rgba(0,210,255,0.05); border-radius: 12px; border-left: 4px solid {SECONDARY_BLUE};'>
-                <h4 style='margin: 0 0 10px 0; color: {SECONDARY_BLUE};'>🤖 Previsions ML</h4>
+                <h4 style='margin: 0 0 10px 0; color: {SECONDARY_BLUE};'>Previsions ML</h4>
                 <p style='margin: 0; color: #8899A6; line-height: 1.6;'>
                     Modele LightGBM optimise pour predictions a 14 jours avec MAE < 1.0.
                 </p>
@@ -210,21 +210,21 @@ def render_team():
     with feat_col2:
         st.markdown(f"""
             <div style='margin-bottom: 15px; padding: 20px; background: rgba(0,210,255,0.05); border-radius: 12px; border-left: 4px solid {SECONDARY_BLUE};'>
-                <h4 style='margin: 0 0 10px 0; color: {SECONDARY_BLUE};'>🚨 Simulateur de Crise</h4>
+                <h4 style='margin: 0 0 10px 0; color: {SECONDARY_BLUE};'>Simulateur de Crise</h4>
                 <p style='margin: 0; color: #8899A6; line-height: 1.6;'>
                     Scenarios pre-configures pour tester la resilience face aux crises sanitaires.
                 </p>
             </div>
             
             <div style='margin-bottom: 15px; padding: 20px; background: rgba(0,210,255,0.05); border-radius: 12px; border-left: 4px solid {SECONDARY_BLUE};'>
-                <h4 style='margin: 0 0 10px 0; color: {SECONDARY_BLUE};'>📈 Detection d'Anomalies</h4>
+                <h4 style='margin: 0 0 10px 0; color: {SECONDARY_BLUE};'>Detection d'Anomalies</h4>
                 <p style='margin: 0; color: #8899A6; line-height: 1.6;'>
                     Identification automatique des pics de charge via methode IQR.
                 </p>
             </div>
             
             <div style='padding: 20px; background: rgba(0,210,255,0.05); border-radius: 12px; border-left: 4px solid {SECONDARY_BLUE};'>
-                <h4 style='margin: 0 0 10px 0; color: {SECONDARY_BLUE};'>💾 Architecture Modulaire</h4>
+                <h4 style='margin: 0 0 10px 0; color: {SECONDARY_BLUE};'>Architecture Modulaire</h4>
                 <p style='margin: 0; color: #8899A6; line-height: 1.6;'>
                     Code refactorise en modules pour faciliter la maintenance et l'evolution.
                 </p>
@@ -241,7 +241,7 @@ def render_team():
                 Projet Vision 2026 - Hopital Pitie-Salpetriere
             </p>
             <p style='margin: 10px 0 0 0; color: #8899A6;'>
-                Developpe avec ❤️ par l'Equipe Data Science & Innovation AP-HP
+                Developpe par  Franck - Charlotte - Gaetan - Djouhra - Farah
             </p>
         </div>
     """, unsafe_allow_html=True)
