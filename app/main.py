@@ -57,21 +57,18 @@ st.markdown(f"""
         background-attachment: fixed;
     }}
 
-    /* Better Header handling for sidebar toggle */
+    /* Radical Streamlit UI Cleaning - Maintaining Toggle Visibility */
     header[data-testid="stHeader"] {{
-        background: transparent !important;
+        background: rgba(0,0,0,0) !important;
+        color: white !important;
     }}
     
     [data-testid="stDecoration"] {{
         display: none !important;
     }}
-    
-    [data-testid="stAppViewContainer"] {{
-        margin-top: -50px; /* Offset the header height */
-    }}
 
     .main .block-container {{
-        padding-top: 3rem !important;
+        padding-top: 2rem !important;
     }}
 
     /* Responsive adjustments */
