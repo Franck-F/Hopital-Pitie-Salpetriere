@@ -301,6 +301,9 @@ df_adm = get_admission_data()
 df_lits, df_perso, df_equip, df_stocks = get_logistique_data()
 df_pat, df_sej, df_diag = get_patient_sejour_data()
 model_lgbm = load_champion_model()
+
+# Global Time Series for all tabs
+daily_ts = df_adm.groupby('date_entree').size().rename('admissions')
 st.logo(LOGO_PATH, icon_image=LOGO_PATH)
 
 # --- Premium Dashboard Header ---
@@ -412,7 +415,6 @@ with tab_exp:
         # --- Temporal Analysis ---
         st.divider()
         st.markdown("### Tendances et Saisonnalité (Série Temporelle)")
-        daily_ts = df_adm.groupby('date_entree').size().rename('admissions')
         daily_series = daily_ts.asfreq('D', fill_value=0)
         decomposition = seasonal_decompose(daily_series, model='additive', period=7)
         
@@ -835,8 +837,8 @@ with tab_ml:
     st.markdown("Moteur predictif **LightGBM Champion** (Performance Maximale).")
     
     if model_lgbm:
-        daily_ts = df_adm.groupby('date_entree').size().rename('admissions').asfreq('D', fill_value=0)
-        future_dates, future_preds = predict_future_admissions(daily_ts, model_lgbm)
+        daily_series_ml = daily_ts.asfreq('D', fill_value=0)
+        future_dates, future_preds = predict_future_admissions(daily_series_ml, model_lgbm)
         
         col_m1, col_m2, col_m3 = st.columns(3)
         with col_m1:
