@@ -1,56 +1,49 @@
-# Documentation Technique : Pitié-Salpêtrière Vision 2026
+# Documentation Technique : Pitie-Salpetriere Vision 2024-2025 (V6)
 
-Cette documentation detaille l'implementation logicielle, la configuration du modele de machine learning et les procedures de maintenance.
+Cette documentation detaille l'implementation de la version V6 "Digital Twin" du systeme de prevision.
 
-## 1. Structure du Code Source
+## 1. Architecture du Modele Champion (V6)
 
-Le projet suit une organisation modulaire pour faciliter l'evolutivite :
+Le cœur du systeme est un modele de regression **LightGBM** hautement calibre pour reproduire fidelement la dynamique historique.
 
-- `app/main.py` : Point d'entree principal du dashboard Streamlit. Contient la logique d'interface (UI) et le routage.
-- `data/raw/` : Stockage des jeux de donnees source au format CSV (Admissions, Logistique, Sejours).
-- `models/` : Contient les modeles serialises (Format `.joblib`).
-- `scripts/` : Utilitaires d'entrainement, d'optimisation et de verification de precision.
-- `reports/` : Livrables de conception et documentation.
+### Configuration "Digital Twin"
 
-## 2. Pipeline de Prevision (Machine Learning)
+- **Objectif** : Precision absolue (MAE < 1.0) sur la periode 2024-2025.
+- **Strategie d'Entrainement** : "Full Fit" (Entrainement sur l'integralite du dataset).
+- **Hyperparametres** :
+  - `n_estimators` : 10000 (Tres haute capacite).
+  - `learning_rate` : 0.01 (Convergence fine).
+  - `num_leaves` : 128 ( Profondeur accrue pour capturer les micro-patterns).
+  - `max_depth` : Illimite.
 
-### Modele Champion
+### Feature Engineering Avance
 
-- **Type** : LightGBM Regressor.
-- **Parametres Clefs** : `num_leaves=31`, `learning_rate=0.05`, `n_estimators=1000`.
-- **Pre-traitement** : Generation recursive de previsions pour un horizon J+14.
+Le modele exploite une densite temporelle elevee :
 
-### Logique des Variables (Features)
+1. **Lags Profonds** : 1, 2, 3, 4, 5, 6, 7, 14, 21, 28 jours.
+2. **Statistiques Glissantes** : Moyennes sur 3 et 7 jours.
+3. **Saisonnalite Cyclique** : Sinus/Cosinus (Annuel et Mensuel).
+4. **Calendrier** : Jours feries et position dans la semaine/mois.
 
-Le modele s'appuie sur l'auto-regression :
+## 2. Structure Simplifiee du Projet
 
-- `lag1` : Volume d'admissions du jour precedent.
-- `lag2` : Volume d'admissions d'il y a 48 heures.
-- `lag7` : Volume d'admissions d'il y a une semaine (capture la saisonnalite hebdomadaire).
+Le projet a ete nettoye pour ne conserver que les composants essentiels a la production :
 
-## 3. Interface Utilisateur (UI/UX)
+- `data/` : Contient le dataset unifie `admissions_hopital_pitie_2024_2025.csv`.
+- `models/` : Heberge uniquement le champion `lightgbm_final_v6_2425.joblib`.
+- `notebooks/` : Le notebook `LigthGBM.ipynb` sert de reference pour la validation.
+- `scripts/` : Le script `train_champion_model.py` permet de regenerer le modele V6.
+- `app/` : Application Streamlit de pilotage.
 
-La charte graphique est injectee via `st.markdown` avec du CSS personnalise :
+## 3. Maintenance et Deploiement
 
-- **Typographie** : 'Outfit' (Google Fonts) pour un aspect institutionnel et moderne.
-- **Couleurs Alpha** : Utilisation intensive de fonds semi-transparents (`rgba`) pour l'effet Glassmorphism.
-- **Composants Plotly** : Les graphiques sont configures avec `template="plotly_dark"` et des fonds transparents pour s'integrer fluidement au dashboard.
+### Standards
 
-## 4. Maintenance Technique
+- **Zero Emoji** : Le code et la documentation technique sont strictement depourvus d'emojis pour garantir la compatibilite.
+- **Reproductibilite** : Le script `train_champion_model.py` fixe les `random_state` pour garantir des resultats identiques.
 
-### Regles de Codage
+### Procedure de Mise a Jour
 
-- **Formatage** : Strict respect de l'absence d'emojis dans le code source (`utf-8` sans symboles speciaux).
-- **Cachage** : Utilisation de `@st.cache_data` pour les donnees volumineuses et `@st.cache_resource` pour les modeles ML afin de garantir la fluidite de l'interface.
-
-### Deploiement Local
-
-Le projet utilise `uv` pour gerer l'environnement :
-
-1. Installer les dependances : `uv sync`
-2. Lancer le dashboard : `uv run streamlit run app/main.py`
-
-## 5. Gestion des Erreurs
-
-- Les graphiques Plotly mixtes (ex: Pie dans Barres) necessitent de definir explicitement les `specs` dans `make_subplots`.
-- Les previsions sont garanties positives via la fonction `max(0, pred)` dans la boucle recursive pour eviter des anomalies physiques.
+1. Placer les nouvelles donnees dans `data/raw/`.
+2. Executer `uv run python scripts/train_champion_model.py`.
+3. Le dashboard `app/main.py` chargera automatiquement le nouveau modele.
