@@ -89,7 +89,7 @@ fig = make_subplots(
            [{'type': 'bar'}, {'type': 'bar'}]]
 )
 
-# 1. Distribution par pôle (barres horizontales)
+# Distribution par pôle (barres horizontales)
 pole_counts = df_admission['service'].value_counts().head(10)
 fig.add_trace(
     go.Bar(y=pole_counts.index, x=pole_counts.values, orientation='h',
@@ -97,14 +97,14 @@ fig.add_trace(
     row=1, col=1
 )
 
-# 2. Mode d'entrée (pie chart)
+# Mode d'entrée (pie chart)
 mode_counts = df_admission['mode_entree'].value_counts()
 fig.add_trace(
     go.Pie(labels=mode_counts.index, values=mode_counts.values, name='Mode'),
     row=1, col=2
 )
 
-# 3. Origine géographique
+# Origine géographique
 geo_counts = df_admission['departement_patient'].value_counts().head(10)
 fig.add_trace(
     go.Bar(x=geo_counts.index, y=geo_counts.values,
@@ -636,7 +636,7 @@ fig = make_subplots(
            [{'type': 'bar'}, {'type': 'bar'}]]
 )
 
-# 1. Volumes totaux
+# Volumes totaux
 fig.add_trace(
     go.Bar(x=['Semaine', 'Weekend'], 
            y=[len(weekday_data), len(weekend_data)],
@@ -646,7 +646,7 @@ fig.add_trace(
     row=1, col=1
 )
 
-# 2. Box plots quotidiens
+# Box plots quotidiens
 fig.add_trace(go.Box(y=weekday_daily.values, name='Semaine', marker_color='steelblue'), row=1, col=2)
 fig.add_trace(go.Box(y=weekend_daily.values, name='Weekend', marker_color='coral'), row=1, col=2)
 
@@ -657,7 +657,7 @@ fig.add_trace(
     row=2, col=1
 )
 
-# 4. Top pôles weekend
+# Top pôles weekend
 fig.add_trace(
     go.Bar(y=weekend_poles.index, x=weekend_poles.values,
            orientation='h', marker_color='coral', showlegend=False),
