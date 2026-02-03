@@ -233,9 +233,16 @@ def render_team():
     
     st.markdown("</div>", unsafe_allow_html=True)
     
-    kdown(f"""
+    # Footer
+    st.markdown(f"""
+        <div style='text-align: center; padding: 30px; background: linear-gradient(135deg, rgba(0,91,161,0.1) 0%, rgba(0,210,255,0.05) 100%); 
+                    border-radius: 20px; border: 1px solid rgba(0,210,255,0.2);'>
             <p style='margin: 0; font-size: 1.1rem; color: {SECONDARY_BLUE}; font-weight: 600;'>
                 Projet Vision 2026 - Hopital Pitie-Salpetriere
             </p>
-            
+            <p style='margin: 10px 0 0 0; color: #8899A6;'>
+                Developpe par l'Equipe Data Science & Innovation AP-HP
+            </p>
+        </div>
     """, unsafe_allow_html=True)
+
