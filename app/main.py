@@ -585,18 +585,6 @@ with tab_exp:
             fig_p_cat.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_p_cat, use_container_width=True)
 
-        # --- Nurse/Bed Ratio Analysis ---
-        st.divider()
-        st.markdown("### Analyse de la Charge de Travail (Ratio Nurse/Bed)")
-        ratio_df = df_lits.merge(df_perso[df_perso['categorie']=='infirmier'], on=['date', 'service'])
-        ratio_df['ratio_nb'] = ratio_df['effectif_total'] / ratio_df['lits_totaux']
-        
-        fig_ratio = px.box(ratio_df, x='service', y='ratio_nb', color='service',
-                           title="Dispersion du Ratio Infirmiers par Lit par Service",
-                           template="plotly_dark")
-        fig_ratio.add_hline(y=0.2, line_dash="dash", line_color="red", annotation_text="Seuil Alerte (1 nurse / 5 beds)")
-        fig_ratio.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig_ratio, use_container_width=True)
 
         # --- Salles d'Isolement & Alertes Epidemiques ---
         st.divider()
