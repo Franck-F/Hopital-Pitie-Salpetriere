@@ -1,31 +1,31 @@
-# Hopital Pitie-Salpetriere : Systeme de Prevision et de Gestion des Ressources
+# Hôpital Pitié-Salpêtrière : Système de Prévision et de Gestion des Ressources
 
 ## Overview
 
-Ce projet deploie un systeme de prevision avance pour l'Hopital Pitie-Salpetriere (Vision 2024-2025). Il est centre sur un modele de "Jumeau Numerique" (Digital Twin) capable de reproduire la dynamique des admissions avec une precision quasi-absolue.
+Ce projet déploie un système de prévision avancé pour l'Hôpital Pitié-Salpêtrière (Vision 2024-2025). Il est centré sur un modèle de "Jumeau Numérique" (Digital Twin) capable de reproduire la dynamique des admissions avec une précision quasi-absolue.
 
 ## Objectifs Atteints
 
-- **Vision 2024-2025** : Couverture complete de la periode historique recente.
-- **Digital Twin V6** : Modele LightGBM "Full Fit" atteignant une MAE < 1.0.
-- **Robustesse** : Suppression des artefacts non pertinents et optimisation pour la prise de decision reelle.
-- **Dashboard Operationnel** : Interface Streamlit epuree pour le pilotage strategique.
+- **Vision 2024-2025** : Couverture complète de la période historique récente.
+- **Digital Twin V6** : Modèle LightGBM "Full Fit" atteignant une MAE < 1.0.
+- **Robustesse** : Suppression des artefacts non pertinents et optimisation pour la prise de décision réelle.
+- **Dashboard Opérationnel** : Interface Streamlit épurée pour le pilotage stratégique.
 
 ## Stack Technique
 
 - **Gestion** : `uv`
 - **Langage** : Python 3.13+
 - **Core** : `pandas`, `numpy`, `joblib`
-- **Modelisation** : `lightgbm` (Champion V6), `scikit-learn`
+- **Modélisation** : `lightgbm` (Champion V6), `scikit-learn`
 - **Visualisation** : `plotly`
 - **Application** : `streamlit`
 
 ## Structure du Projet
 
-- `data/` : Dataset unifie `admissions_hopital_pitie_2024_2025.csv`.
-- `notebooks/` : Notebook unique de reference `LigthGBM.ipynb` (V6).
-- `models/` : Modele Champion `lightgbm_final_v6_2425.joblib` uniquement.
-- `scripts/` : Script de re-entrainement `train_champion_model.py`.
+- `data/` : Dataset unifié `admissions_hopital_pitie_2024_2025.csv`.
+- `notebooks/` : Notebook unique de référence `LigthGBM.ipynb` (V6).
+- `models/` : Modèle Champion `lightgbm_final_v6_2425.joblib` uniquement.
+- `scripts/` : Script de ré-entraînement `train_champion_model.py`.
 - `app/` : Application de pilotage.
 - `reports/` : Documentation technique et conception.
 
