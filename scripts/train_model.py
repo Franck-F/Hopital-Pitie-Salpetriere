@@ -4,7 +4,6 @@ import xgboost as xgb
 import joblib
 import os
 from sklearn.metrics import mean_absolute_error
-from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 
 # Load data
@@ -48,21 +47,13 @@ TARGET = 'admissions'
 X = features_df[FEATURES]
 y = features_df[TARGET]
 
-# 1. Linear Model for Seasonal Scale & Trend
-# Captures the general "heat" and seasonal baseline
-reg_lr = LinearRegression()
-reg_lr.fit(X, y)
-y_lr = reg_lr.predict(X)
-
-# 2. XGBoost for Residuals (Optimization with GridSearchCV)
-residuals = y - y_lr
-
-xgb_model = xgb.XGBRegressor(objective='reg:squarederror', base_score=0)
+# XGBoost Optimization with GridSearchCV
+xgb_model = xgb.XGBRegressor(objective='reg:squarederror')
 
 param_grid = {
     'n_estimators': [500, 1000],
-    'learning_rate': [0.01, 0.03, 0.05],
-    'max_depth': [4, 6, 8],
+    'learning_rate': [0.01, 0.05, 0.1],
+    'max_depth': [3, 5, 7],
     'subsample': [0.8, 1.0],
     'colsample_bytree': [0.8, 1.0]
 }
@@ -77,17 +68,15 @@ grid_search = GridSearchCV(
     n_jobs=-1
 )
 
-grid_search.fit(X, residuals)
-reg_xgb = grid_search.best_estimator_
+grid_search.fit(X, y)
+best_xgb = grid_search.best_estimator_
 
 print(f"Best Parameters found: {grid_search.best_params_}")
 
-# Save Hybrid Bundle
+# Save Optimized Model
 os.makedirs('models', exist_ok=True)
-joblib.dump({'lr': reg_lr, 'xgb': reg_xgb}, 'models/hybrid_admissions_v1.joblib')
+joblib.dump(best_xgb, 'models/xgboost_optimized_v1.joblib')
 
-print("Optimized Hybrid Model trained and saved to models/hybrid_admissions_v1.joblib")
-mae_lr = mean_absolute_error(y, y_lr)
-mae_hybrid = mean_absolute_error(y, y_lr + reg_xgb.predict(X))
-print(f"Linear Baseline MAE: {mae_lr:.2f}")
-print(f"Optimized Hybrid MAE: {mae_hybrid:.2f}")
+print("Optimized XGBoost Model saved to models/xgboost_optimized_v1.joblib")
+final_mae = mean_absolute_error(y, best_xgb.predict(X))
+print(f"Final Optimization MAE: {final_mae:.2f}")

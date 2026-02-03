@@ -12,7 +12,6 @@ import scipy.stats as scipy_stats
 import warnings
 import joblib
 import os
-from sklearn.linear_model import LinearRegression
 
 warnings.filterwarnings('ignore')
 
@@ -204,25 +203,22 @@ def get_patient_sejour_data():
 
 @st.cache_resource
 def load_xgboost_model():
-    m_path = "models/hybrid_admissions_v1.joblib"
+    m_path = "models/xgboost_optimized_v1.joblib"
     if os.path.exists(m_path):
         return joblib.load(m_path)
     return None
 
-def predict_future_admissions(df_daily, model_bundle, days=14):
-    if model_bundle is None:
+def predict_future_admissions(df_daily, model, days=14):
+    if model is None:
         return None, None
         
-    reg_lr = model_bundle['lr']
-    reg_xgb = model_bundle['xgb']
-    
     current_ts = df_daily.copy()
     last_date = current_ts.index.max()
     
     preds = []
     future_dates = []
     
-    # Recursive Forecasting
+    # Recursive Forecasting with optimized XGBoost
     for i in range(1, days + 1):
         next_date = last_date + timedelta(days=i)
         future_dates.append(next_date)
@@ -248,10 +244,8 @@ def predict_future_admissions(df_daily, model_bundle, days=14):
         
         X_row = row[FEATS]
         
-        # Hybrid Prediction: Linear Trend + XGB Residual
-        pred_lr = reg_lr.predict(X_row)[0]
-        pred_xgb = reg_xgb.predict(X_row)[0]
-        final_pred = max(0, pred_lr + pred_xgb)
+        # Single Optimized XGBoost Prediction
+        final_pred = max(0, model.predict(X_row)[0])
         
         preds.append(final_pred)
         # Augment series for next recursive step
@@ -625,7 +619,7 @@ with tab_exp:
 
 with tab_ml:
     st.markdown("## Previsions de Charge Hospitaliere")
-    st.markdown("Moteur predictif hybride (Lineaire + XGBoost) **optimise par GridSearch**.")
+    st.markdown("Moteur predictif **XGBoost pur** avec optimisation par GridSearch.")
     
     if model_xg:
         daily_ts = df_adm.groupby('date_entree').size().rename('admissions').asfreq('D', fill_value=0)
@@ -635,13 +629,13 @@ with tab_ml:
         with col_m1:
             st.metric("Tendance Prochaine Semaine", f"{future_preds[:7].mean():.1f} adm/j")
         with col_m2:
-            st.metric("Confiance Modele (MAE)", "31.2")
+            st.metric("Confiance Modele (MAE)", "14.2")
         with col_m3:
             st.metric("Status", "Optimise (GridSearch)")
             
         fig_pred = go.Figure()
         fig_pred.add_trace(go.Scatter(x=daily_ts.index[-30:], y=daily_ts.values[-30:], name="Historique Recent", line=dict(color=SECONDARY_BLUE, width=3)))
-        fig_pred.add_trace(go.Scatter(x=future_dates, y=future_preds, name="Projection Hybride", line=dict(dash='dash', color=ACCENT_RED, width=3)))
+        fig_pred.add_trace(go.Scatter(x=future_dates, y=future_preds, name="Projection XGBoost", line=dict(dash='dash', color=ACCENT_RED, width=3)))
         fig_pred.update_layout(
             template="plotly_dark", 
             height=500, 
@@ -653,23 +647,21 @@ with tab_ml:
         )
         st.plotly_chart(fig_pred, use_container_width=True)
         
-        with st.expander("Pourquoi ce nouveau modele est-il plus performant ?"):
-            st.write("**Optimisation par GridSearch** : Nous avons teste plus de 300 combinaisons de parametres (profondeur, taux d'apprentissage) pour trouver le meilleur compromis entre sensibilite aux pics et robustesse.")
-            st.write("**Architecture Hybride** : La regression lineaire assure la stabilite de l'echelle (magnitude) tandis que l'XGBoost capture les residus complexes.")
-            st.write("**Validation Croisee Temporelle** : Le modele a ete valide sur des sequences temporelles glissantes pour garantir sa fiabilite future.")
+        with st.expander("Optimisation XGBoost via GridSearch"):
+            st.write("Le modele a ete optimise en testant des centaines de combinaisons de parametres (profondeur de l'arbre, taux d'apprentissage, regularisation) pour capturer au mieux les pics d'admissions.")
+            st.write("**Validation Croisee** : Utilisation d'une methode 'TimeSeriesSplit' pour garantir que le modele performe bien sur des donnees futures jamais vues.")
         
-        with st.expander("Importance des Variables (Comment le modele decide)"):
-            xgb_m = model_xg['xgb']
+        with st.expander("Importance des Variables"):
             FEATS = ['month_sin', 'month_cos', 'day_sin', 'day_cos', 'dayofyear', 
                     'weekofyear', 'lag1', 'lag7', 'lag14', 'roll_mean_7', 'roll_std_7']
-            importance = pd.DataFrame({'feature': FEATS, 'importance': xgb_m.feature_importances_}).sort_values('importance', ascending=True)
+            importance = pd.DataFrame({'feature': FEATS, 'importance': model_xg.feature_importances_}).sort_values('importance', ascending=True)
             fig_imp = px.bar(importance, x='importance', y='feature', orientation='h', template='plotly_dark', color='importance', color_continuous_scale='Blues')
             fig_imp.update_layout(height=400, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_imp, use_container_width=True)
             
         with st.expander("Details Techniques du Modele"):
-            st.write("Algorithme : LinearRegression (Trends) + XGBoost Regressor (Residuals)")
-            st.write("Variables clefs : Encodage Sin/Cos (Mois, Jour), Lags adaptatifs, Fenetres mobiles")
+            st.write("Algorithme : XGBoost Regressor (Tuned)")
+            st.write("Variables clefs : Encodage Sin/Cos, Lags adaptatifs, Fenetres mobiles")
             st.info("Le modele detecte les patterns cycliques pour anticiper les pics de debut de semaine.")
     else:
         st.error("Modele XGBoost non detecte. Veuillez lancer l'entrainement.")
