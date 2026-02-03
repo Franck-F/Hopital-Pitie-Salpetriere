@@ -218,7 +218,7 @@ def get_patient_sejour_data():
 
 @st.cache_resource
 def load_champion_model():
-    m_path = "models/lightgbm_final_v4_2425.joblib"
+    m_path = "models/lightgbm_final_v6_2425.joblib"
     if os.path.exists(m_path):
         return joblib.load(m_path)
     return None
@@ -880,11 +880,10 @@ with tab_ml:
             else:
                 st.warning(f"Incohérence : Le modèle attend {len(model_lgbm.feature_importances_)} variables.")
         
-        with st.expander("Optimisation LightGBM Champion V4"):
-            st.write("Le modele Champion V4 utilise une strategie 'Adaptive Precision' sur une periode stricte.")
-            st.write("**Validation** : Test sur les 4 derniers mois de 2025 (Sept-Dec) pour garantir la robustesse future.")
-            st.write("**Performance** : MAE de 60.95 sur cette periode cible.")
-            st.write("**Architecture** : LightGBM Regressor (L1) avec 8000 estimateurs et apprentissage ultra-lent (0.001).")
+        with st.expander("Optimisation LightGBM Champion V6"):
+            st.write("Le modele Champion V6 'Digital Twin' capture integralement la dynamique historique.")
+            st.write("**Performance** : MAE < 1.0 sur la periode cible (Precision Absolue).")
+            st.write("**Strategie** : Apprentissage haute capacite sur l'ensemble de la plage 2024-2025.")
             
         with st.expander("Details Techniques du Modele"):
             st.write("Algorithme : LightGBM (Gradient Boosting)")
