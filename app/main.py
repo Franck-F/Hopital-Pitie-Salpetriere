@@ -670,12 +670,19 @@ with tab_ml:
             st.write("**Validation Croisee** : Utilisation d'une methode 'TimeSeriesSplit' pour garantir que le modele performe bien sur des donnees futures jamais vues.")
         
         with st.expander("Importance des Variables"):
-            FEATS = ['month_sin', 'month_cos', 'day_sin', 'day_cos', 'dayofyear', 
-                    'weekofyear', 'lag1', 'lag7', 'lag14', 'roll_mean_7', 'roll_std_7']
-            importance = pd.DataFrame({'feature': FEATS, 'importance': model_xg.feature_importances_}).sort_values('importance', ascending=True)
-            fig_imp = px.bar(importance, x='importance', y='feature', orientation='h', template='plotly_dark', color='importance', color_continuous_scale='Blues')
-            fig_imp.update_layout(height=400, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-            st.plotly_chart(fig_imp, use_container_width=True)
+            # Ensure FEATS matches the model's expected input
+            FEATS = ['month_sin', 'month_cos', 'day_sin', 'day_cos', 'is_holiday', 'days_to_holiday', 
+                     'dayofyear_sin', 'dayofyear_cos', 'weekofyear', 'dayofmonth', 'lag1', 'lag2', 'lag7', 'lag14', 
+                     'roll_mean_3', 'roll_mean_7', 'roll_max_7', 'roll_min_7', 'roll_std_7']
+            
+            # Check if model and FEATS length match
+            if len(FEATS) == len(model_xg.feature_importances_):
+                importance = pd.DataFrame({'feature': FEATS, 'importance': model_xg.feature_importances_}).sort_values('importance', ascending=True)
+                fig_imp = px.bar(importance, x='importance', y='feature', orientation='h', template='plotly_dark', color='importance', color_continuous_scale='Blues')
+                fig_imp.update_layout(height=450, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+                st.plotly_chart(fig_imp, use_container_width=True)
+            else:
+                st.warning(f"Incohérence de configuration : Le modèle attend {len(model_xg.feature_importances_)} variables, mais {len(FEATS)} sont définies.")
             
         with st.expander("Details Techniques du Modele"):
             st.write("Algorithme : XGBoost Regressor (Tuned)")
