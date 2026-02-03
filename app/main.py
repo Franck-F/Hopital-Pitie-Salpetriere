@@ -874,7 +874,7 @@ with tab_ml:
             st.write("Variables clefs : Lag 1, Lag 2, Lag 7, Calendrier et Vacances")
             st.info("Le modele integre le contexte des jours feries pour une meilleure precision en periode de fetes.")
     else:
-        st.error("Modele XGBoost non detecte. Veuillez lancer l'entrainement.")
+        st.error("Modele LightGBM V6 'Digital Twin' non detecte. Veuillez lancer le script d'entrainement.")
 
 with tab_sim:
     st.markdown("## Simulateur de Tension Hospitalière")
