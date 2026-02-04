@@ -25,7 +25,7 @@ def render_admission_subtab(df_adm, daily_ts):
     st.markdown(f"""
         <h2 style='background: linear-gradient(135deg, {SECONDARY_BLUE} 0%, {PRIMARY_BLUE} 100%); 
                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>
-            ANALYSE DES ADMISSIONS 2024
+            ANALYSE DES ADMISSIONS 2024-2025
         </h2>
     """, unsafe_allow_html=True)
     
@@ -164,20 +164,27 @@ def render_logistics_subtab(df_lits, df_perso, df_stocks):
     lc1, lc2 = st.columns(2)
     
     with lc1:
-        lits_p = df_lits.groupby('service')['lits_totaux'].first().sort_values(ascending=False).head(10)
-        fig_lits = px.bar(x=lits_p.values, y=lits_p.index, orientation='h',
-                         title="Top 10 Poles (Lits Totaux)", template="plotly_dark",
-                         color_discrete_sequence=[SECONDARY_BLUE])
-        fig_lits.update_layout(height=350, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False)
+        # Visualisation interactive avec couleurs par service
+        lits_service = df_lits.groupby('service')['lits_totaux'].first().sort_values(ascending=False).reset_index()
+        fig_lits = px.bar(lits_service, x='service', y='lits_totaux', 
+                         title="Capacite lits par service",
+                         text='lits_totaux', color='service',
+                         color_discrete_sequence=px.colors.sequential.Plasma_r,
+                         template="plotly_dark")
+        fig_lits.update_traces(texttemplate='%{text:,}', textposition='outside')
+        fig_lits.update_layout(xaxis_tickangle=45, height=450, showlegend=False,
+                              paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_lits, use_container_width=True)
+
         
     with lc2:
         perso_cat = df_perso[df_perso['categorie'] != 'total'].groupby('categorie')['effectif_total'].sum().reset_index()
         fig_p_cat = px.bar(perso_cat, x='categorie', y='effectif_total', color='categorie',
                            title="Effectifs par Corps de Metier (ETP)",
                            template="plotly_dark")
-        fig_p_cat.update_layout(height=350, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False)
+        fig_p_cat.update_layout(height=450, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", showlegend=False)
         st.plotly_chart(fig_p_cat, use_container_width=True)
+
     
     # Expanders pour details
     with st.expander("Salles d'Isolement & Vigilance Epidemique"):
