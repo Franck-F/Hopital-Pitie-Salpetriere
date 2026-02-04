@@ -18,7 +18,7 @@ Ce projet vise à développer un système de prévision et de gestion des ressou
 - **Gestion** : `uv`
 - **Langage** : Python 3.13+
 - **Core** : `pandas`, `numpy`, `joblib`
-- **Modélisation** : `lightgbm` (Champion V6), `scikit-learn`
+- **Modélisation** : `lightgbm`, `scikit-learn`...
 - **Visualisation** : `plotly`
 - **Application** : `streamlit`
 
