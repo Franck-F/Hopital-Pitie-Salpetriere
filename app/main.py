@@ -19,8 +19,7 @@ if 'page' not in st.session_state:
 def go_to_dashboard():
     st.session_state.page = 'dashboard'
     # st.rerun() is handled by streamlit automatically on state change usually, 
-    # but explicit rerun might be needed if called from callback in some versions.
-    # Here we just change the state, and let the script flow handle display.
+    
 
 # --- Logique de Routing ---
 if st.session_state.page == 'landing':

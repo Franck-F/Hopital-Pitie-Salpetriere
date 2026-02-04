@@ -98,7 +98,7 @@ def render_simulator(daily_ts, model_lgbm):
             mode="gauge+number+delta",
             value=intensite,
             domain={'x': [0, 1], 'y': [0, 1]},
-            title={'text': "Intensite du Choc", 'font': {'size': 20, 'color': '#f0f4f8'}},
+            title={'text': "Intensite du pic", 'font': {'size': 20, 'color': '#f0f4f8'}},
             delta={'reference': 20, 'increasing': {'color': ACCENT_RED}},
             gauge={
                 'axis': {'range': [None, 100], 'tickcolor': "#f0f4f8"},

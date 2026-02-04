@@ -17,7 +17,6 @@ def setup_page_config():
         page_title="Pitie-Salpetriere | Vision 2026",
         layout="wide",
     )
-
 # --- Style Global ---
 def get_global_style():
     return f"""
