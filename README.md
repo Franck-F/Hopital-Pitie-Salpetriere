@@ -25,7 +25,7 @@ Ce projet vise à développer un système de prévision et de gestion des ressou
 ## Structure du Projet
 
 - `data/` : Dataset unifié `admissions_hopital_pitie_2024_2025.csv`.
-- `notebooks/` : Notebook unique de référence `LigthGBM.ipynb` .
+- `notebooks/` : `LigthGBM.ipynb` `EDA_Admission.ipynb` `EDA_logistique.ipynb` `EDA_patient_séjour.ipynb`.
 - `models/` : Modèle  `lightgbm_final.joblib`.
 - `scripts/` : Script de ré-entraînement `train_model.py`.
 - `app/` : Application de pilotage.
