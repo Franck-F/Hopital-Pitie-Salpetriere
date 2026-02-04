@@ -260,11 +260,29 @@ def render_sejour_subtab(df_pat, df_sej, df_diag):
         st.plotly_chart(fig_sexe, use_container_width=True)
         
     with dc2:
-        fig_age_sej = px.histogram(df_sej, x="age", nbins=40, marginal="violin",
-                                 title="Pyramide des Ages a l'Admission",
-                                 template="plotly_dark", color_discrete_sequence=['#3498db'])
-        fig_age_sej.update_layout(height=350, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig_age_sej, use_container_width=True)
+        # Boxplot ameliore avec couleurs par type et outliers
+        fig_age_box = px.box(
+            df_sej,
+            x="type_hospit",
+            y="age",
+            color="type_hospit",
+            color_discrete_sequence=px.colors.qualitative.Prism,
+            points="suspectedoutliers",
+            notched=True,
+            title="<b>Age median selon le type d'hospitalisation</b><br><span style='font-size:13px;color:grey'>Comparaison des distributions</span>",
+            template="plotly_dark"
+        )
+        fig_age_box.update_layout(
+            xaxis_title=None,
+            yaxis_title="Age",
+            showlegend=False,
+            title_x=0.5,
+            height=350,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)"
+        )
+        st.plotly_chart(fig_age_box, use_container_width=True)
+
     
     # Repartition ages par pole (important, donc visible)
     st.markdown("### Repartition des Ages par Pole")
