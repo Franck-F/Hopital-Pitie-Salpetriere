@@ -4,7 +4,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.53.1-FF4B4B.svg?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![LightGBM](https://img.shields.io/badge/lightgbm-FF4B4B.svg?style=flat&logo=lightgbm&logoColor=white)](https://lightgbm.com.)
+[![LightGBM](https://img.shields.io/badge/lightgbm-FF4B4B.svg?style=flat&logo=lightgbm&logoColor=white)](https://lightgbm.readthedocs.io/en/stable/)
 ---
 
 [![Aperçu Application](app/assets/demo_screenshot.png)](https://hopital-pitie-salpetrieregit-jsfpemvrjtde9tma3f7yq6.streamlit.app/)
