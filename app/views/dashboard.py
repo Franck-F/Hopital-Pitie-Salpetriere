@@ -39,13 +39,65 @@ def show_dashboard():
         focus = st.selectbox("Focus Intelligence", ["Activité Globale", "Alertes Pics", "Optimisation Services"])
         st.divider()
         
-        # Contenu Sidebar Personnalise
+        # Contenu Sidebar Personnalisé
         if focus == "Alertes Pics":
-            st.error("3 alertes détectées")
-            st.info("Pic prévu : Lundi prochain (+15%)")
+            st.markdown("#### 🚨 Alertes Détectées")
+            
+            # Alerte 1 - Pic d'admissions
+            st.error("**Pic d'Admissions Prévu**")
+            st.markdown("""
+                - **Date** : Lundi 10 Février
+                - **Intensité** : +15% vs moyenne
+                - **Services impactés** : Urgences, Médecine
+                - **Action** : Renforcer effectifs
+            """)
+            
+            # Alerte 2 - Tension lits
+            st.warning("**Tension Lits Réanimation**")
+            st.markdown("""
+                - **Taux actuel** : 92% occupation
+                - **Seuil critique** : 95%
+                - **Marge** : 3 lits disponibles
+                - **Action** : Préparer plan de débordement
+            """)
+            
+            # Alerte 3 - Stock médicaments
+            st.info("**Alerte Stock Médicaments**")
+            st.markdown("""
+                - **Références en rupture** : 2
+                - **Références critiques** : 5 (< 7 jours)
+                - **Action** : Commande urgente requise
+            """)
+            
         elif focus == "Optimisation Services":
-            st.success("Staff : Optimisé")
-            st.warning("Lits : Tension en Réa")
+            st.markdown("#### ⚙️ Recommandations d'Optimisation")
+            
+            # Optimisation 1 - Staff
+            st.success("**Effectifs Personnel**")
+            st.markdown("""
+                - **Statut** : ✅ Optimisé
+                - **Taux présence** : 87%
+                - **Répartition** : Équilibrée
+                - **Suggestion** : Maintenir niveau actuel
+            """)
+            
+            # Optimisation 2 - Lits
+            st.warning("**Capacité Lits**")
+            st.markdown("""
+                - **Statut** : ⚠️ Tension en Réanimation
+                - **Occupation Réa** : 92%
+                - **Occupation Médecine** : 78%
+                - **Suggestion** : Transférer 2-3 patients stables vers Médecine
+            """)
+            
+            # Optimisation 3 - Flux
+            st.info("**Flux Patients**")
+            st.markdown("""
+                - **Durée moyenne séjour** : 5.2 jours
+                - **Objectif** : 4.8 jours
+                - **Potentiel gain** : 8% de capacité
+                - **Suggestion** : Accélérer sorties matinales
+            """)
         
         st.divider()
         
