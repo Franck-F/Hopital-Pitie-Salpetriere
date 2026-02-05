@@ -401,7 +401,7 @@ def render_simulator(daily_ts, model_lgbm):
                     showlegend=False,
                     xaxis_title="Catégorie de Personnel",
                     yaxis_title="Effectif Total (ETP)"
-                )\r
+                )
                 st.plotly_chart(fig_staff, use_container_width=True)
                 
                 # Graphique d'évolution temporelle des effectifs
@@ -511,7 +511,7 @@ def render_simulator(daily_ts, model_lgbm):
                 
                 # Message d'alerte si sous le seuil critique
                 if scenario_type == "Grève du Personnel" and impact_factor < 0.85:
-                    st.error(f"⚠️ **ALERTE CRITIQUE** : L'effectif disponible ({impact_factor*100:.0f}%) passe sous le seuil de sécurité de 85% pendant toute la durée de la simulation !")
+                    st.error(f"**ALERTE CRITIQUE** : L'effectif disponible ({impact_factor*100:.0f}%) passe sous le seuil de sécurité de 85% pendant toute la durée de la simulation !")
                 
             else:  # Stocks
                 depletion_days = 30 / (1 + intensite/100)
