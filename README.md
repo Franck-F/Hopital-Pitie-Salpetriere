@@ -1,39 +1,35 @@
 # Hôpital Pitié-Salpêtrière : Système de Prévision et de Gestion des Ressources
 
-![Python Version](https://img.shields.io/badge/python-3.13+-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![uv](https://img.shields.io/badge/managed%20by-uv-purple.svg)
-![Status](https://img.shields.io/badge/status-in--development-yellow.svg)
+[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.53.1-FF4B4B.svg?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![LightGBM](https://img.shields.io/badge/lightgbm-FF4B4B.svg?style=flat&logo=lightgbm&logoColor=white)](https://lightgbm.readthedocs.io/en/stable/)
+---
+
+[![Aperçu Application](app/assets/demo_screenshot.png)](https://hopital-pitie-salpetrieregit-jsfpemvrjtde9tma3f7yq6.streamlit.app/)
 
 ## Overview
 
-Ce projet vise à développer un système de prévision et de gestion des ressources pour l'Hôpital Pitié-Salpêtrière. Il permet d'anticiper les pics d'activité, d'optimiser l'allocation des lits et du personnel, et de fournir un tableau de bord interactif pour les décideurs hospitaliers.
-
-## Objectifs
-
-- Générer un jeu de données réaliste basé sur l'activité hospitalière.
-- Analyser les tendances d'admissions et identifier les périodes critiques.
-- Développer un modèle prédictif (Machine Learning) pour anticiper les flux.
-- Créer un prototype MVP avec un tableau de bord interactif (Streamlit/Plotly).
+Ce projet vise à développer un système de prévision et de gestion des ressources pour l'Hôpital Pitié-Salpêtrière. Il permet d'anticiper les photos d'activité, d'optimiser l'allocation des lits et du personnel, et de fournir un tableau de bord interactif pour les décideurs hospitaliers.
 
 ## Stack Technique
 
-- **Gestion des dépendances** : `uv`
+- **Gestion des packages** : `uv`
 - **Langage** : Python 3.13+
-- **Analyse de données** : `pandas`, `numpy`, `scipy`
-- **Visualisation** : `plotly`, `matplotlib`, `seaborn`
-- **Machine Learning** : `scikit-learn`, `xgboost`, `prophet`, `statsmodels`
-- **Application Web** : `streamlit`
-- **Tests** : `pytest`
+- **Core** : `pandas`, `numpy`, `joblib`
+- **Modélisation** : `lightgbm`, `scikit-learn`...
+- **Visualisation** : `plotly`
+- **Application** : `streamlit`
 
 ## Structure du Projet
 
-- `data/` : Jeux de données bruts et transformés.
-- `notebooks/` : Analyses exploratoires et développement des modèles.
-- `src/` : Code source pour la génération de données et le processing.
-- `app/` : Application Streamlit (MVP).
-- `reports/` : Rapports de conception, d'analyse et stratégiques.
-- `tests/` : Tests unitaires.
+- `data/` : Dataset unifié `admissions_hopital_pitie_2024_2025.csv`.
+- `notebooks/` : `LigthGBM.ipynb` `EDA_Admission.ipynb` `EDA_logistique.ipynb` `EDA_patient_séjour.ipynb`.
+- `models/` : Modèle  `lightgbm_final.joblib`.
+- `scripts/` : Script de ré-entraînement `train_model.py`.
+- `app/` : Application de pilotage.
+- `reports/` : Documentation technique et conception.
 
 ## Installation
 
@@ -57,3 +53,4 @@ uv run streamlit run app/main.py
 - [@koffigaetan-adj](https://github.com/koffigaetan-adj)
 - [@Djouhratabet](https://github.com/Djouhratabet)
 - [@cmartineau15](https://github.com/cmartineau15)
+- [@farah2791](https://github.com/farah2791)

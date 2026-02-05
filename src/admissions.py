@@ -3,16 +3,13 @@ import numpy as np
 import random
 from datetime import datetime, timedelta
 
-# --- CONFIGURATION (Basée sur Chiffres Clés 2015 Pitié-Salpêtrière) ---
-
-# 1. ORIGINE GEOGRAPHIQUE (Page 14)
+# --- CONFIGURATION (Identique à votre script 2024) ---
 ORIGINES = {
     "Paris (75)": 0.35, "Val-de-Marne (94)": 0.13, "Hauts-de-Seine (92)": 0.06,
     "Seine-Saint-Denis (93)": 0.09, "Seine-et-Marne (77)": 0.06,
     "Autres IDF": 0.15, "Hors IDF / Étranger": 0.16
 }
 
-# 2. STATISTIQUES PAR PÔLE (Pages 4, 6, 8 + Flux Urgences)
 POLES_V4 = {
     "Urgences (Passage court)": {
         "weight": 114133, "dms": 0, "ratio_ambu": 1.0, 
@@ -62,8 +59,8 @@ POLES_V4 = {
     }
 }
 
-# --- FONCTION DE GENERATION ---
-def generate_complete_dataset_2024():
+# --- FONCTION DE GENERATION 2024-2025 ---
+def generate_dataset_2024_2025():
     # Normalisation des poids
     total_vol = sum(p["weight"] for p in POLES_V4.values())
     poles_list = list(POLES_V4.keys())
@@ -74,14 +71,18 @@ def generate_complete_dataset_2024():
 
     data = []
     start_date = datetime(2024, 1, 1)
+    end_date = datetime(2025, 12, 31)
+    # Calcul du nombre total de jours (2024 est bissextile donc 366 + 365 = 731)
+    delta_days = (end_date - start_date).days + 1 
+    
     global_id = 0
     
-    print("Génération en cours (365 jours)...")
+    print(f"Génération en cours pour {delta_days} jours (2024-2025)...")
     
-    for day_offset in range(365):
+    for day_offset in range(delta_days):
         current_date = start_date + timedelta(days=day_offset)
         
-        # Facteur Saisonnier (Hiver +25%, Été -20%)
+        # Facteur Saisonnier (identique pour les deux années)
         month = current_date.month
         if month in [12, 1, 2]: season_factor = 1.25
         elif month in [7, 8]: season_factor = 0.8
@@ -142,15 +143,6 @@ def generate_complete_dataset_2024():
 
 # Exécution
 if __name__ == "__main__":
-    from pathlib import Path
-    
-    # Créer le répertoire de sortie s'il n'existe pas
-    output_dir = Path(__file__).parent.parent / "data" / "raw"
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    output_file = output_dir / "admissions_hopital_pitie_2024.csv"
-    
-    df = generate_complete_dataset_2024()
-    df.to_csv(output_file, index=False)
-    print(f"Fichier généré : {output_file}")
-    print(f"Nombre de lignes : {len(df):,}")
+    df = generate_dataset_2024_2025()
+    df.to_csv("admissions_hopital_pitie_2024_2025.csv", index=False)
+    print(f"Fichier généré : {len(df)} lignes.")
