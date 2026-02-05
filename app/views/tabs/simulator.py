@@ -3,6 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pandas as pd
+import numpy as np
 from config import SECONDARY_BLUE, ACCENT_RED, PRIMARY_BLUE
 from utils import get_logistique_data, predict_future_admissions
 
@@ -400,8 +401,117 @@ def render_simulator(daily_ts, model_lgbm):
                     showlegend=False,
                     xaxis_title="Catégorie de Personnel",
                     yaxis_title="Effectif Total (ETP)"
-                )
+                )\r
                 st.plotly_chart(fig_staff, use_container_width=True)
+                
+                # Graphique d'évolution temporelle des effectifs
+                st.markdown("---")
+                st.markdown("### Évolution des Effectifs sur la Période de Simulation")
+                
+                # Création des données temporelles
+                days = np.arange(0, sim_days + 1)
+                baseline_staff = np.full(len(days), total_staff)
+                
+                # Calcul de l'effectif simulé selon le scénario
+                if scenario_type == "Grève du Personnel":
+                    # Pour une grève : diminution progressive des effectifs disponibles
+                    impact_factor = 1 - (intensite / 100)
+                    simulated_staff = baseline_staff * impact_factor
+                    chart_subtitle = f"Impact : Réduction de {intensite}% des effectifs disponibles"
+                    y_label = "Effectif Disponible (ETP)"
+                else:
+                    # Pour autres scénarios : augmentation du besoin en personnel
+                    impact_factor = 1 + (intensite / 100)
+                    simulated_staff = baseline_staff * impact_factor
+                    chart_subtitle = f"Impact : Besoin accru de {intensite}% en personnel"
+                    y_label = "Effectif / Besoin (ETP)"
+                
+                # Seuil critique à 85% du baseline
+                critical_threshold = baseline_staff * 0.85
+                
+                # Création du graphique
+                fig_evolution = go.Figure()
+                
+                # Zone de danger (sous le seuil critique)
+                fig_evolution.add_trace(go.Scatter(
+                    x=days,
+                    y=critical_threshold,
+                    fill='tozeroy',
+                    fillcolor='rgba(255, 82, 82, 0.1)',
+                    line=dict(width=0),
+                    showlegend=False,
+                    hoverinfo='skip'
+                ))
+                
+                # Ligne de seuil critique
+                fig_evolution.add_trace(go.Scatter(
+                    x=days,
+                    y=critical_threshold,
+                    mode='lines',
+                    name='Seuil Critique (85%)',
+                    line=dict(color=ACCENT_RED, width=2, dash='dash'),
+                    hovertemplate='Seuil: %{y:.0f} ETP<extra></extra>'
+                ))
+                
+                # Ligne baseline
+                fig_evolution.add_trace(go.Scatter(
+                    x=days,
+                    y=baseline_staff,
+                    mode='lines',
+                    name='Effectif Actuel (Baseline)',
+                    line=dict(color=SECONDARY_BLUE, width=3),
+                    hovertemplate='Baseline: %{y:.0f} ETP<extra></extra>'
+                ))
+                
+                # Ligne scénario simulé
+                scenario_color = ACCENT_RED if scenario_type == "Grève du Personnel" else '#FFA500'
+                scenario_name = 'Effectif Disponible' if scenario_type == "Grève du Personnel" else 'Besoin en Personnel'
+                
+                fig_evolution.add_trace(go.Scatter(
+                    x=days,
+                    y=simulated_staff,
+                    mode='lines',
+                    name=f'{scenario_name} (Scénario)',
+                    line=dict(color=scenario_color, width=3),
+                    hovertemplate=f'{scenario_name}: %{{y:.0f}} ETP<extra></extra>'
+                ))
+                
+                # Mise en forme du graphique
+                fig_evolution.update_layout(
+                    title=dict(
+                        text=f"Évolution des Effectifs - {scenario_type}<br><sub>{chart_subtitle}</sub>",
+                        font=dict(size=16, color='#f0f4f8')
+                    ),
+                    xaxis_title="Jours de Simulation",
+                    yaxis_title=y_label,
+                    template="plotly_dark",
+                    height=450,
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    hovermode='x unified',
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="right",
+                        x=1,
+                        bgcolor="rgba(0,0,0,0.5)"
+                    ),
+                    xaxis=dict(
+                        gridcolor='rgba(255,255,255,0.1)',
+                        showgrid=True
+                    ),
+                    yaxis=dict(
+                        gridcolor='rgba(255,255,255,0.1)',
+                        showgrid=True
+                    )
+                )
+                
+                st.plotly_chart(fig_evolution, use_container_width=True)
+                
+                # Message d'alerte si sous le seuil critique
+                if scenario_type == "Grève du Personnel" and impact_factor < 0.85:
+                    st.error(f"⚠️ **ALERTE CRITIQUE** : L'effectif disponible ({impact_factor*100:.0f}%) passe sous le seuil de sécurité de 85% pendant toute la durée de la simulation !")
                 
             else:  # Stocks
                 depletion_days = 30 / (1 + intensite/100)
