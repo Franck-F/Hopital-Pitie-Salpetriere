@@ -4,7 +4,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.53.1-FF4B4B.svg?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![LightGBM](https://img.shields.io/badge/lightgbm-FF4B4B.svg?style=flat&logo=streamlit&logoColor=white)](https://lightgbm.com.)
+[![LightGBM](https://img.shields.io/badge/lightgbm-FF4B4B.svg?style=flat&logo=lightgbm&logoColor=white)](https://lightgbm.readthedocs.io/en/stable/)
 ---
 
 [![Aperçu Application](app/assets/demo_screenshot.png)](https://hopital-pitie-salpetrieregit-jsfpemvrjtde9tma3f7yq6.streamlit.app/)
@@ -15,17 +15,17 @@ Ce projet vise à développer un système de prévision et de gestion des ressou
 
 ## Stack Technique
 
-- **Gestion** : `uv`
+- **Gestion des packages** : `uv`
 - **Langage** : Python 3.13+
 - **Core** : `pandas`, `numpy`, `joblib`
-- **Modélisation** : `lightgbm` (Champion V6), `scikit-learn`
+- **Modélisation** : `lightgbm`, `scikit-learn`...
 - **Visualisation** : `plotly`
 - **Application** : `streamlit`
 
 ## Structure du Projet
 
 - `data/` : Dataset unifié `admissions_hopital_pitie_2024_2025.csv`.
-- `notebooks/` : Notebook unique de référence `LigthGBM.ipynb` .
+- `notebooks/` : `LigthGBM.ipynb` `EDA_Admission.ipynb` `EDA_logistique.ipynb` `EDA_patient_séjour.ipynb`.
 - `models/` : Modèle  `lightgbm_final.joblib`.
 - `scripts/` : Script de ré-entraînement `train_model.py`.
 - `app/` : Application de pilotage.

@@ -9,6 +9,7 @@ authors = [
     { name = "Koffi Gaëtan", email = "koffi.adjai@epitech.digital" },
     { name = "Djouhra", email = "djouhra.ould-younes@epitech.digital" },
     { name = "Chalotte", email = "charlotteMartineau@epitech.digital" },
+    { name = "Farah", email = "farahhebbar@epitech.digital" },
 ]
 license = { text = "MIT" }
 keywords = ["healthcare", "hospital", "prediction", "machine-learning", "data-analysis"]

@@ -39,13 +39,118 @@ def show_dashboard():
         focus = st.selectbox("Focus Intelligence", ["Activité Globale", "Alertes Pics", "Optimisation Services"])
         st.divider()
         
-        # Contenu Sidebar Personnalise
+        # Contenu Sidebar Personnalisé
         if focus == "Alertes Pics":
-            st.error("3 alertes détectées")
-            st.info("Pic prévu : Lundi prochain (+15%)")
+            st.markdown("#### Alertes Détectées")
+            
+            # Alerte 1 - Pic d'admissions
+            st.error("**Pic d'Admissions Prévu**")
+            st.markdown("""
+                - **Date** : Lundi 10 Février
+                - **Intensité** : +15% vs moyenne
+                - **Services impactés** : Urgences, Médecine
+                - **Action** : Renforcer effectifs
+            """)
+            
+            # Alerte 2 - Tension lits
+            st.warning("**Tension Lits Réanimation**")
+            st.markdown("""
+                - **Taux actuel** : 92% occupation
+                - **Seuil critique** : 95%
+                - **Marge** : 3 lits disponibles
+                - **Action** : Préparer plan de débordement
+            """)
+            
+            # Alerte 3 - Stock médicaments
+            st.info("**Alerte Stock Médicaments**")
+            st.markdown("""
+                - **Références en rupture** : 2
+                - **Références critiques** : 5 (< 7 jours)
+                - **Action** : Commande urgente requise
+            """)
+            
         elif focus == "Optimisation Services":
-            st.success("Staff : Optimisé")
-            st.warning("Lits : Tension en Réa")
+            st.markdown("#### Recommandations d'Optimisation")
+            
+            # Optimisation 1 - Staff
+            st.success("**Effectifs Personnel**")
+            st.markdown("""
+                - **Statut** :  Optimisé
+                - **Taux présence** : 87%
+                - **Répartition** : Équilibrée
+                - **Suggestion** : Maintenir niveau actuel
+            """)
+            
+            # Optimisation 2 - Lits
+            st.warning("**Capacité Lits**")
+            st.markdown("""
+                - **Statut** :  Tension en Réanimation
+                - **Occupation Réa** : 92%
+                - **Occupation Médecine** : 78%
+                - **Suggestion** : Transférer 2-3 patients stables vers Médecine
+            """)
+            
+            # Optimisation 3 - Flux
+            st.info("**Flux Patients**")
+            st.markdown("""
+                - **Durée moyenne séjour** : 5.2 jours
+                - **Objectif** : 4.8 jours
+                - **Potentiel gain** : 8% de capacité
+                - **Suggestion** : Accélérer sorties matinales
+            """)
+        
+        st.divider()
+        
+        # Section Mentions Legales
+        st.markdown("<h4 style='color:#8899A6; font-size: 0.9rem; margin-top: 20px;'>Informations Legales</h4>", unsafe_allow_html=True)
+        
+        with st.expander("CGU - Conditions Générales d'Utilisation"):
+            st.markdown("""
+                **Application de Gestion Hospitalière**
+                
+                Cette application est destinée exclusivement à un usage interne 
+                par le personnel autorisé de l'Hôpital Pitié-Salpêtrière.
+                
+                - L'accès est réservé aux professionnels de santé habilités
+                - Les données affichées sont confidentielles
+                - Toute utilisation non autorisée est interdite
+                - Les prédictions ML sont des outils d'aide à la décision
+                
+                Version 2026 - AP-HP
+            """)
+        
+        with st.expander("RGPD - Protection des Données"):
+            st.markdown("""
+                **Conformité RGPD**
+                
+                Les données personnelles sont traitées conformément au 
+                Règlement Général sur la Protection des Données (RGPD).
+                
+                - Finalité : Gestion et optimisation des flux hospitaliers
+                - Base légale : Mission d'intérêt public (santé publique)
+                - Durée de conservation : Selon réglementation en vigueur
+                - Droits : Accès, rectification, limitation, opposition
+                
+                Contact DPO : dpo@pitié.fr
+            """)
+        
+        with st.expander("Mentions Legales"):
+            st.markdown("""
+                **Éditeur**
+                
+                Assistance Publique - Hôpitaux de Paris (AP-HP)
+                Hôpital Pitié-Salpêtrière
+                47-83 Boulevard de l'Hôpital, 75013 Paris
+                
+                **Hébergement**
+                
+                Données hébergées sur infrastructure sécurisée AP-HP
+                Conforme aux normes HDS (Hébergeur de Données de Santé)
+                
+                **Propriété Intellectuelle**
+                
+                Tous droits réservés - AP-HP 2026
+            """)
         
         st.divider()
         if st.button("Quitter le Dashboard"):
@@ -59,7 +164,7 @@ def show_dashboard():
 
     
     with tab_acc:
-        render_overview(df_adm, daily_ts)
+        render_overview(df_adm, daily_ts, df_lits, df_perso, df_equip, df_stocks)
         
     with tab_exp:
         render_eda(df_adm, daily_ts, df_lits, df_perso, df_equip, df_stocks, df_pat, df_sej, df_diag)
