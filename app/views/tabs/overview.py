@@ -37,7 +37,7 @@ def render_overview(df_adm, daily_ts, df_lits=None, df_perso=None, df_equip=None
         # Equipements
         df_equip_latest = df_equip[df_equip['date'] == latest_date]
         total_equipements = df_equip_latest['quantite_totale'].sum()
-        equipements_fonctionnels = df_equip_latest['quantite_fonctionnelle'].sum()
+        equipements_fonctionnels = df_equip_latest['en_service'].sum()
         taux_fonctionnel = (equipements_fonctionnels / total_equipements * 100) if total_equipements > 0 else 0
         
         # Stocks medicaments
