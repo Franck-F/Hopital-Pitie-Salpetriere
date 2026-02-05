@@ -12,7 +12,7 @@ def render_ml(df_daily, model_lgbm):
     st.markdown("Moteur predictif **LightGBM**.")
     
     if model_lgbm:
-        # 1. Evaluation Historique (Identique Notebook)
+        # Evaluation Historique 
         daily_series_ml = df_daily.asfreq('D', fill_value=0)
         
         # Préparation Données pour Eval
@@ -44,13 +44,13 @@ def render_ml(df_daily, model_lgbm):
 
         st.divider()
 
-        # 2. Projection Future
+        # Projection Future
         st.markdown("### Projections Futures")
         daily_series_ml = df_daily.asfreq('D', fill_value=0)
         future_dates, future_preds = predict_future_admissions(daily_series_ml, model_lgbm)
         
         if future_dates is not None:
-             # Combine history and forecast for checking
+             # Combiner l'historique et le forecast pour le checking
             last_days = daily_series_ml.iloc[-30:]
             
             fig_proj = go.Figure()
@@ -60,7 +60,7 @@ def render_ml(df_daily, model_lgbm):
             fig_proj.update_layout(title="Trajectoire Previsionnelle (J+14)", template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
             st.plotly_chart(fig_proj, use_container_width=True)
             
-            # --- Importance des Variables (V6) ---
+            # --- Importance des Variables (Shap Value)
             st.divider()
             with st.expander("Explicabilité du Modèle (SHAP/Gain)"):
                  importance = model_lgbm.feature_importances_

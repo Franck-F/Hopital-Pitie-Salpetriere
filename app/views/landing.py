@@ -20,8 +20,6 @@ def show_landing_page(go_to_dashboard_callback):
         </div>
         """, unsafe_allow_html=True)
         
-        # Callback wrapper to match st.button on_click signature if needed, 
-        # or simplified just by checking return
         if st.button("Entrer dans l'Espace Décisionnel"):
             go_to_dashboard_callback()
             

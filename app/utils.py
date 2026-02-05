@@ -8,7 +8,7 @@ from datetime import timedelta
 from config import DATA_ADMISSION_PATH
 
 
-# --- Utilitaire pour charger image en base64 ---
+# Utilitaire pour charger image en base64 
 def get_base64_image(path):
     try:
         with open(path, "rb") as image_file:
@@ -16,7 +16,7 @@ def get_base64_image(path):
     except:
         return ""
 
-# --- Chargement des Donnees (Admissions Reelles) ---
+# Chargement des Donnees 
 @st.cache_data
 def get_admission_data():
     df = pd.read_csv(DATA_ADMISSION_PATH)

@@ -13,7 +13,7 @@ from views.tabs.team import render_team
 
 
 def show_dashboard():
-    # --- Data Integration ---
+    # Data Integration 
     df_adm = get_admission_data()
     df_lits, df_perso, df_equip, df_stocks = get_logistique_data()
     df_pat, df_sej, df_diag = get_patient_sejour_data()
@@ -22,7 +22,7 @@ def show_dashboard():
     # Global Time Series
     daily_ts = df_adm.groupby('date_entree').size().rename('admissions')
     
-    # --- Header ---
+    # Header 
     if hasattr(st, 'logo'):
         st.logo(LOGO_PATH, icon_image=LOGO_PATH)
         
@@ -32,7 +32,7 @@ def show_dashboard():
         </div>
     """, unsafe_allow_html=True)
     
-    # --- Sidebar ---
+    # Sidebar 
     with st.sidebar:
         st.markdown("<h2 style='color:#f0f4f8;'>Vision 2026</h2>", unsafe_allow_html=True)
         st.divider()
@@ -81,7 +81,7 @@ def show_dashboard():
                 - **Suggestion** : Maintenir niveau actuel
             """)
             
-            # Optimisation 2 - Lits
+            # Optimisation - Lits
             st.warning("**Capacité Lits**")
             st.markdown("""
                 - **Statut** :  Tension en Réanimation
@@ -90,7 +90,7 @@ def show_dashboard():
                 - **Suggestion** : Transférer 2-3 patients stables vers Médecine
             """)
             
-            # Optimisation 3 - Flux
+            # Optimisation - Flux
             st.info("**Flux Patients**")
             st.markdown("""
                 - **Durée moyenne séjour** : 5.2 jours
@@ -157,7 +157,7 @@ def show_dashboard():
             st.session_state.page = 'landing'
             st.rerun()
             
-    # --- Tabs Layout ---
+    # Onglets 
     tab_acc, tab_exp, tab_ml, tab_sim, tab_tea = st.tabs([
         "TABLEAU DE BORD", "EXPLORATION DATA", "PREVISIONS ML", "SIMULATEUR", "EQUIPE"
     ])
