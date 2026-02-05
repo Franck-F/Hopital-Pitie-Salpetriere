@@ -383,7 +383,7 @@ def render_simulator(daily_ts, model_lgbm):
                 # Répartition par catégorie (exclure les lignes 'total')
                 if selected_service == 'Ensemble de l\'hôpital':
                     df_perso_detail = df_perso[df_perso['categorie'] != 'total']
-                    chart_title = f"Répartition des Effectifs - Ensemble de l'Hôpital au {latest_date.strftime('%d/%m/%Y')}"
+                    chart_title = f"Répartition des Effectifs"
                 else:
                     df_perso_detail = df_perso[(df_perso['service'] == selected_service) & (df_perso['categorie'] != 'total')]
                     chart_title = f"Répartition des Effectifs - {selected_service} au {latest_date.strftime('%d/%m/%Y')}"
