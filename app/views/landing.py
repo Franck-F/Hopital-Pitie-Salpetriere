@@ -10,7 +10,7 @@ def show_landing_page(go_to_dashboard_callback):
     col_text, col_visual = st.columns([1.2, 1])
     with col_text:
         st.markdown(f"<div style='border-left: 5px solid {ACCENT_RED}; padding-left: 25px; margin-bottom: 30px;'><img src='data:image/png;base64,{get_base64_image(LOGO_PATH)}' width='300'></div>", unsafe_allow_html=True)
-        st.markdown("<h1 class='wow-title'>L'excellence au service de la donnée prédictive.</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 class='wow-title'>CARE-PILOT : L'excellence au service de la donnée prédictive.</h1>", unsafe_allow_html=True)
         st.markdown("<p class='wow-sub'>Anticiper les besoins, optimiser les ressources, sauver des vies. Bienvenue dans l'interface décisionnelle de l'Hôpital Pitié-Salpêtrière.</p>", unsafe_allow_html=True)
         st.markdown(f"""
         <div style='margin-bottom: 40px;'>

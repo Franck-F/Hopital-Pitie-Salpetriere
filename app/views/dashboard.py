@@ -84,7 +84,7 @@ def show_dashboard():
             # Optimisation 2 - Lits
             st.warning("**Capacité Lits**")
             st.markdown("""
-                - **Statut** : Tension en Réanimation
+                - **Statut** :  Tension en Réanimation
                 - **Occupation Réa** : 92%
                 - **Occupation Médecine** : 78%
                 - **Suggestion** : Transférer 2-3 patients stables vers Médecine
