@@ -15,7 +15,7 @@ def render_simulator(daily_ts, model_lgbm):
                 SIMULATEUR DE CRISE
             </h1>
             <p style='font-size: 1.2rem; color: #8899A6; margin-top: -10px;'>
-                Anticipez les scenarios critiques et evaluez la resilience du systeme
+                Anticipez les scénarios critiques et évaluez la résilience du système
             </p>
         </div>
     """, unsafe_allow_html=True)
@@ -26,49 +26,49 @@ def render_simulator(daily_ts, model_lgbm):
     col_params, col_preview = st.columns([1, 1.5])
     
     with col_params:
-        st.markdown("### Configuration du Scenario")
+        st.markdown("### Configuration du Scénario")
         
         # Type de crise avec scenarios realistes
         scenario_type = st.selectbox(
             "Type de Crise",
             [
-                "Epidemie (Grippe/COVID)", 
-                "Pic d'Activite Saisonniere",
-                "Greve du Personnel",
+                "Épidémie (Grippe/COVID)", 
+                "Pic d'Activité Saisonnière",
+                "Grève du Personnel",
                 "Canicule/Vague de Chaleur", 
                 "Accident de Masse",
                 "Crise Sanitaire Majeure",
                 "Personnalise"
             ],
-            help="Selectionnez un scenario pre-configure ou personnalise"
+            help="Sélectionnez un scénario pré-configuré ou personnalisé"
         )
         
-        # Presets selon le type avec parametres realistes
-        if scenario_type == "Epidemie (Grippe/COVID)":
+        # Presets selon le type avec paramètres réalistes
+        if scenario_type == "Épidémie (Grippe/COVID)":
             default_intensity = 40
             default_resources = ["Lits (Rea/Med)", "Effectif Soignant"]
             default_days = 28
             scenario_desc = "Augmentation progressive des admissions respiratoires"
-        elif scenario_type == "Pic d'Activite Saisonniere":
+        elif scenario_type == "Pic d'Activité Saisonnière":
             default_intensity = 20
             default_resources = ["Lits (Rea/Med)"]
             default_days = 14
-            scenario_desc = "Surcharge temporaire liee aux variations saisonnieres"
-        elif scenario_type == "Greve du Personnel":
+            scenario_desc = "Surcharge temporaire liée aux variations saisonnières"
+        elif scenario_type == "Grève du Personnel":
             default_intensity = 15
             default_resources = ["Effectif Soignant"]
             default_days = 7
-            scenario_desc = "Reduction de l'effectif disponible impactant la capacite"
+            scenario_desc = "Réduction de l'effectif disponible impactant la capacité"
         elif scenario_type == "Canicule/Vague de Chaleur":
             default_intensity = 35
             default_resources = ["Lits (Rea/Med)", "Effectif Soignant"]
             default_days = 10
-            scenario_desc = "Afflux de patients vulnerables (deshydratation, malaises)"
+            scenario_desc = "Afflux de patients vulnérables (déshydratation, malaises)"
         elif scenario_type == "Accident de Masse":
             default_intensity = 60
             default_resources = ["Lits (Rea/Med)", "Stocks Pharma"]
             default_days = 3
-            scenario_desc = "Afflux massif et soudain de victimes traumatisees"
+            scenario_desc = "Afflux massif et soudain de victimes traumatisées"
         elif scenario_type == "Crise Sanitaire Majeure":
             default_intensity = 50
             default_resources = ["Lits (Rea/Med)", "Effectif Soignant", "Stocks Pharma"]
@@ -78,37 +78,37 @@ def render_simulator(daily_ts, model_lgbm):
             default_intensity = 10
             default_resources = ["Lits (Rea/Med)"]
             default_days = 14
-            scenario_desc = "Configuration personnalisee"
+            scenario_desc = "Configuration personnalisée"
         
-        # Affichage description du scenario
-        if scenario_type != "Personnalise":
-            st.info(f"**Scenario** : {scenario_desc}")
+        # Affichage description du scénario
+        if scenario_type != "Personnalisé":
+            st.info(f"**Scénario** : {scenario_desc}")
         
         st.divider()
         
         intensite = st.slider(
-            "Intensite du pic (%)",
+            "Intensité du pic (%)",
             0, 100, default_intensity,
-            help="Augmentation prevue du flux d'admissions"
+            help="Augmentation prévue du flux d'admissions"
         )
         
-        # Selection multiple de ressources critiques
+        # Sélection multiple de ressources critiques
         ressources_types = st.multiselect(
-            "Ressources Critiques (selection multiple)",
+            "Ressources Critiques (sélection multiple)",
             ["Lits (Rea/Med)", "Effectif Soignant", "Stocks Pharma"],
             default=default_resources,
-            help="Selectionnez une ou plusieurs ressources a analyser simultanement"
+            help="Sélectionnez une ou plusieurs ressources à analyser simultanément"
         )
         
-        # Validation de la selection
+        # Validation de la sélection
         if not ressources_types:
-            st.warning("Veuillez selectionner au moins une ressource critique")
+            st.warning("Veuillez sélectionner au moins une ressource critique")
             ressources_types = ["Lits (Rea/Med)"]  # Fallback
         
         sim_days = st.number_input(
             "Horizon (Jours)",
             7, 60, default_days,
-            help="Duree de la simulation"
+            help="Durée de la simulation"
         )
         
         st.divider()
@@ -129,7 +129,7 @@ def render_simulator(daily_ts, model_lgbm):
             }
     
     with col_preview:
-        st.markdown("### Apercu des Parametres")
+        st.markdown("### Aperçu des Paramètres")
         
         # Jauge d'intensite visuelle
         fig_gauge = go.Figure(go.Indicator(
@@ -169,7 +169,7 @@ def render_simulator(daily_ts, model_lgbm):
     
     st.markdown("</div>", unsafe_allow_html=True)
     
-    # Resultats de la simulation
+    # Résultats de la simulation
     if st.session_state.get('run_sim', False) and model_lgbm:
         params = st.session_state.get('sim_params', {})
         intensite = params.get('intensite', 10)
@@ -180,7 +180,7 @@ def render_simulator(daily_ts, model_lgbm):
         st.markdown(f"""
             <div style='background: linear-gradient(135deg, rgba(0,210,255,0.1) 0%, rgba(0,91,161,0.1) 100%); 
                         border-radius: 20px; padding: 20px; border: 1px solid rgba(0,210,255,0.3); margin-bottom: 30px;'>
-                <h2 style='margin: 0; color: {SECONDARY_BLUE};'> Resultats de Simulation : {scenario_type}</h2>
+                <h2 style='margin: 0; color: {SECONDARY_BLUE};'> Résultats de Simulation : {scenario_type}</h2>
                 <p style='margin: 5px 0 0 0; color: #8899A6;'>Analyse de {len(ressources_types)} ressource(s) critique(s)</p>
             </div>
         """, unsafe_allow_html=True)
@@ -215,7 +215,7 @@ def render_simulator(daily_ts, model_lgbm):
         with kpi3:
             st.markdown(f"""
                 <div style='background: rgba(255,255,255,0.05); border-radius: 15px; padding: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1);'>
-                    <p style='margin: 0; font-size: 0.9rem; color: #8899A6;'>Duree Simulation</p>
+                    <p style='margin: 0; font-size: 0.9rem; color: #8899A6;'>Durée Simulation</p>
                     <h2 style='margin: 5px 0; color: {SECONDARY_BLUE};'>{sim_days}</h2>
                     <p style='margin: 0; font-size: 0.8rem; color: #8899A6;'>jours</p>
                 </div>
@@ -224,7 +224,7 @@ def render_simulator(daily_ts, model_lgbm):
         with kpi4:
             st.markdown(f"""
                 <div style='background: rgba(255,255,255,0.05); border-radius: 15px; padding: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1);'>
-                    <p style='margin: 0; font-size: 0.9rem; color: #8899A6;'>Ressources Analysees</p>
+                    <p style='margin: 0; font-size: 0.9rem; color: #8899A6;'>Ressources Analysées</p>
                     <h2 style='margin: 5px 0; color: {SECONDARY_BLUE};'>{len(ressources_types)}</h2>
                     <p style='margin: 0; font-size: 0.8rem; color: #8899A6;'>dimensions</p>
                 </div>
@@ -238,7 +238,7 @@ def render_simulator(daily_ts, model_lgbm):
         df_perso = df_perso_raw[df_perso_raw['date'] == latest_date]
         df_stocks = df_stocks_raw[df_stocks_raw['date'] == latest_date]
         
-        # Analyse de chaque ressource selectionnee
+        # Analyse de chaque ressource sélectionnée
         is_critical = False
         critical_resources = []
         
@@ -372,9 +372,24 @@ def render_simulator(daily_ts, model_lgbm):
                     is_critical = True
                     critical_resources.append(ressource_type)
                 
-                # Repartition par categorie
-                fig_staff = px.bar(df_perso, x='categorie', y='effectif_total',
-                                  title=f"Repartition des Effectifs au {latest_date.strftime('%d/%m/%Y')}",
+                # Filtre par pôle/service
+                services_list = ['Ensemble de l\'hôpital'] + sorted(df_perso['service'].unique().tolist())
+                selected_service = st.selectbox(
+                    "Filtrer par Pôle/Service",
+                    services_list,
+                    key=f"service_filter_{idx}"
+                )
+                
+                # Répartition par catégorie (exclure les lignes 'total')
+                if selected_service == 'Ensemble de l\'hôpital':
+                    df_perso_detail = df_perso[df_perso['categorie'] != 'total']
+                    chart_title = f"Répartition des Effectifs - Ensemble de l'Hôpital au {latest_date.strftime('%d/%m/%Y')}"
+                else:
+                    df_perso_detail = df_perso[(df_perso['service'] == selected_service) & (df_perso['categorie'] != 'total')]
+                    chart_title = f"Répartition des Effectifs - {selected_service} au {latest_date.strftime('%d/%m/%Y')}"
+                
+                fig_staff = px.bar(df_perso_detail, x='categorie', y='effectif_total',
+                                  title=chart_title,
                                   template="plotly_dark",
                                   color='categorie',
                                   color_discrete_sequence=px.colors.qualitative.Set3)
@@ -382,7 +397,9 @@ def render_simulator(daily_ts, model_lgbm):
                     height=400,
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)",
-                    showlegend=False
+                    showlegend=False,
+                    xaxis_title="Catégorie de Personnel",
+                    yaxis_title="Effectif Total (ETP)"
                 )
                 st.plotly_chart(fig_staff, use_container_width=True)
                 

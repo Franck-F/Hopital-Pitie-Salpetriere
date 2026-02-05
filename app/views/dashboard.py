@@ -52,52 +52,52 @@ def show_dashboard():
         # Section Mentions Legales
         st.markdown("<h4 style='color:#8899A6; font-size: 0.9rem; margin-top: 20px;'>Informations Legales</h4>", unsafe_allow_html=True)
         
-        with st.expander("CGU - Conditions Generales d'Utilisation"):
+        with st.expander("CGU - Conditions Générales d'Utilisation"):
             st.markdown("""
-                **Application de Gestion Hospitaliere**
+                **Application de Gestion Hospitalière**
                 
-                Cette application est destinee exclusivement a un usage interne 
-                par le personnel autorise de l'Hopital Pitie-Salpetriere.
+                Cette application est destinée exclusivement à un usage interne 
+                par le personnel autorisé de l'Hôpital Pitié-Salpêtrière.
                 
-                - L'acces est reserve aux professionnels de sante habilites
-                - Les donnees affichees sont confidentielles
-                - Toute utilisation non autorisee est interdite
-                - Les predictions ML sont des outils d'aide a la decision
+                - L'accès est réservé aux professionnels de santé habilités
+                - Les données affichées sont confidentielles
+                - Toute utilisation non autorisée est interdite
+                - Les prédictions ML sont des outils d'aide à la décision
                 
                 Version 2026 - AP-HP
             """)
         
-        with st.expander("RGPD - Protection des Donnees"):
+        with st.expander("RGPD - Protection des Données"):
             st.markdown("""
-                **Conformite RGPD**
+                **Conformité RGPD**
                 
-                Les donnees personnelles sont traitees conformement au 
-                Reglement General sur la Protection des Donnees (RGPD).
+                Les données personnelles sont traitées conformément au 
+                Règlement Général sur la Protection des Données (RGPD).
                 
-                - Finalite : Gestion et optimisation des flux hospitaliers
-                - Base legale : Mission d'interet public (sante publique)
-                - Duree de conservation : Selon reglementation en vigueur
-                - Droits : Acces, rectification, limitation, opposition
+                - Finalité : Gestion et optimisation des flux hospitaliers
+                - Base légale : Mission d'intérêt public (santé publique)
+                - Durée de conservation : Selon réglementation en vigueur
+                - Droits : Accès, rectification, limitation, opposition
                 
-                Contact DPO : dpo@aphp.fr
+                Contact DPO : dpo@pitié.fr
             """)
         
         with st.expander("Mentions Legales"):
             st.markdown("""
-                **Editeur**
+                **Éditeur**
                 
-                Assistance Publique - Hopitaux de Paris (AP-HP)
-                Hopital Pitie-Salpetriere
-                47-83 Boulevard de l'Hopital, 75013 Paris
+                Assistance Publique - Hôpitaux de Paris (AP-HP)
+                Hôpital Pitié-Salpêtrière
+                47-83 Boulevard de l'Hôpital, 75013 Paris
                 
-                **Hebergement**
+                **Hébergement**
                 
-                Donnees hebergees sur infrastructure securisee AP-HP
-                Conforme aux normes HDS (Hebergeur de Donnees de Sante)
+                Données hébergées sur infrastructure sécurisée AP-HP
+                Conforme aux normes HDS (Hébergeur de Données de Santé)
                 
-                **Propriete Intellectuelle**
+                **Propriété Intellectuelle**
                 
-                Tous droits reserves - AP-HP 2026
+                Tous droits réservés - AP-HP 2026
             """)
         
         st.divider()
@@ -112,7 +112,7 @@ def show_dashboard():
 
     
     with tab_acc:
-        render_overview(df_adm, daily_ts)
+        render_overview(df_adm, daily_ts, df_lits, df_perso, df_equip, df_stocks)
         
     with tab_exp:
         render_eda(df_adm, daily_ts, df_lits, df_perso, df_equip, df_stocks, df_pat, df_sej, df_diag)

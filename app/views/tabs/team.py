@@ -28,7 +28,7 @@ def render_team():
                         border-radius: 15px; padding: 25px; border: 1px solid rgba(0,210,255,0.3); margin-bottom: 20px;'>
                 <h3 style='margin: 0 0 15px 0; color: {SECONDARY_BLUE};'>Data Scientist & Innovation</h3>
                 <p style='margin: 5px 0; font-size: 1.1rem;'><strong>Franck - Charlotte - Gaetan - Djouhra - Farah</strong></p>
-                <p style='margin: 5px 0; color: #8899A6;'>Modelisation Predictive & ML</p>
+                <p style='margin: 5px 0; color: #8899A6;'>Modélisation Prédictive & ML</p>
             </div>
         """, unsafe_allow_html=True)
         
@@ -69,7 +69,7 @@ def render_team():
     with kpi1:
         st.markdown(f"""
             <div style='background: rgba(0,91,161,0.2); border-radius: 15px; padding: 20px; text-align: center; border: 1px solid rgba(0,210,255,0.3);'>
-                <p style='margin: 0; font-size: 0.9rem; color: #8899A6;'>Donnees Analysees</p>
+                <p style='margin: 0; font-size: 0.9rem; color: #8899A6;'>Données Analysées</p>
                 <h2 style='margin: 5px 0; color: {SECONDARY_BLUE};'>100K+</h2>
                 <p style='margin: 0; font-size: 0.8rem; color: #8899A6;'>admissions/an</p>
             </div>
@@ -241,7 +241,7 @@ def render_team():
                 Projet Vision 2026 - Hopital Pitie-Salpetriere
             </p>
             <p style='margin: 10px 0 0 0; color: #8899A6;'>
-                Developpe par l'Equipe Data Science & Innovation AP-HP
+                Développé par l'Équipe Data Science & Innovation AP-HP
             </p>
         </div>
     """, unsafe_allow_html=True)

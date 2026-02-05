@@ -15,7 +15,7 @@ def render_ml(df_daily, model_lgbm):
         # 1. Evaluation Historique (Identique Notebook)
         daily_series_ml = df_daily.asfreq('D', fill_value=0)
         
-        # Preparation Donnees pour Eval
+        # Préparation Données pour Eval
         full_df_feat = create_features_vectorized(daily_series_ml)
         mask_eval = (full_df_feat.index >= '2025-09-01') & (full_df_feat.index <= '2025-12-31')
         X_eval = full_df_feat.loc[mask_eval].drop(columns=['admissions'])
@@ -23,7 +23,7 @@ def render_ml(df_daily, model_lgbm):
         
         y_pred_eval = model_lgbm.predict(X_eval)
         
-        # Calcul Metriques
+        # Calcul Métriques
         mae = mean_absolute_error(y_eval, y_pred_eval)
         rmse = np.sqrt(mean_squared_error(y_eval, y_pred_eval))
         r2 = r2_score(y_eval, y_pred_eval)
@@ -72,4 +72,4 @@ def render_ml(df_daily, model_lgbm):
                  st.plotly_chart(fig_imp, use_container_width=True)
 
     else:
-        st.warning("Modele non charge. Veuillez verifier le chemin du fichier.")
+        st.warning("Modèle non chargé. Veuillez vérifier le chemin du fichier.")
