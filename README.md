@@ -15,7 +15,7 @@ Ce projet vise à développer un système de prévision et de gestion des ressou
 
 ## Stack Technique
 
-- **Gestion** : `uv`
+- **Gestion des packages** : `uv`
 - **Langage** : Python 3.13+
 - **Core** : `pandas`, `numpy`, `joblib`
 - **Modélisation** : `lightgbm`, `scikit-learn`...
