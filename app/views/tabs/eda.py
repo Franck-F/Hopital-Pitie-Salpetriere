@@ -29,7 +29,7 @@ def render_admission_subtab(df_adm, daily_ts):
         </h2>
     """, unsafe_allow_html=True)
     
-    # Dashboard KPIs compact
+    # Dashboard KPIs 
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
     with kpi1:
         st.metric("Total Admissions", f"{len(df_adm):,}")
@@ -40,7 +40,7 @@ def render_admission_subtab(df_adm, daily_ts):
     with kpi4:
         st.metric("Pic Journalier", f"{daily_ts.max()}")
     
-    # Detection anomalies en haut (important)
+    # Detection anomalies 
     Q1 = daily_ts.quantile(0.25)
     Q3 = daily_ts.quantile(0.75)
     IQR = Q3 - Q1
@@ -152,7 +152,7 @@ def render_logistics_subtab(df_lits, df_perso, df_stocks):
         </h2>
     """, unsafe_allow_html=True)
     
-    # KPIs compact
+    # KPIs
     l1, l2, l3, l4 = st.columns(4)
     l1.metric("Occupation Moyenne", f"{df_lits['taux_occupation'].mean():.1%}")
     l2.metric("Suroccupation (>95%)", f"{(df_lits['taux_occupation'] > 0.95).sum():,}")
@@ -284,7 +284,7 @@ def render_sejour_subtab(df_pat, df_sej, df_diag):
         st.plotly_chart(fig_age_box, use_container_width=True)
 
     
-    # Repartition ages par pole (important, donc visible)
+    # Repartition ages par pole 
     st.markdown("### Repartition des Ages par Pole")
     df_sej['age_bin'] = pd.cut(df_sej['age'], bins=[0, 18, 45, 65, 105], labels=['Enfants', 'Adultes', 'Seniors', 'Grand Age'])
     pole_order = df_sej['pole'].value_counts().index.tolist()
