@@ -48,6 +48,59 @@ def show_dashboard():
             st.warning("Lits : Tension en Réa")
         
         st.divider()
+        
+        # Section Mentions Legales
+        st.markdown("<h4 style='color:#8899A6; font-size: 0.9rem; margin-top: 20px;'>Informations Legales</h4>", unsafe_allow_html=True)
+        
+        with st.expander("CGU - Conditions Generales d'Utilisation"):
+            st.markdown("""
+                **Application de Gestion Hospitaliere**
+                
+                Cette application est destinee exclusivement a un usage interne 
+                par le personnel autorise de l'Hopital Pitie-Salpetriere.
+                
+                - L'acces est reserve aux professionnels de sante habilites
+                - Les donnees affichees sont confidentielles
+                - Toute utilisation non autorisee est interdite
+                - Les predictions ML sont des outils d'aide a la decision
+                
+                Version 2026 - AP-HP
+            """)
+        
+        with st.expander("RGPD - Protection des Donnees"):
+            st.markdown("""
+                **Conformite RGPD**
+                
+                Les donnees personnelles sont traitees conformement au 
+                Reglement General sur la Protection des Donnees (RGPD).
+                
+                - Finalite : Gestion et optimisation des flux hospitaliers
+                - Base legale : Mission d'interet public (sante publique)
+                - Duree de conservation : Selon reglementation en vigueur
+                - Droits : Acces, rectification, limitation, opposition
+                
+                Contact DPO : dpo@aphp.fr
+            """)
+        
+        with st.expander("Mentions Legales"):
+            st.markdown("""
+                **Editeur**
+                
+                Assistance Publique - Hopitaux de Paris (AP-HP)
+                Hopital Pitie-Salpetriere
+                47-83 Boulevard de l'Hopital, 75013 Paris
+                
+                **Hebergement**
+                
+                Donnees hebergees sur infrastructure securisee AP-HP
+                Conforme aux normes HDS (Hebergeur de Donnees de Sante)
+                
+                **Propriete Intellectuelle**
+                
+                Tous droits reserves - AP-HP 2026
+            """)
+        
+        st.divider()
         if st.button("Quitter le Dashboard"):
             st.session_state.page = 'landing'
             st.rerun()
