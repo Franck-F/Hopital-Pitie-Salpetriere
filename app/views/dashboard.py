@@ -41,7 +41,7 @@ def show_dashboard():
         
         # Contenu Sidebar Personnalisé
         if focus == "Alertes Pics":
-            st.markdown("#### 🚨 Alertes Détectées")
+            st.markdown("#### Alertes Détectées")
             
             # Alerte 1 - Pic d'admissions
             st.error("**Pic d'Admissions Prévu**")
@@ -70,12 +70,12 @@ def show_dashboard():
             """)
             
         elif focus == "Optimisation Services":
-            st.markdown("#### ⚙️ Recommandations d'Optimisation")
+            st.markdown("#### Recommandations d'Optimisation")
             
             # Optimisation 1 - Staff
             st.success("**Effectifs Personnel**")
             st.markdown("""
-                - **Statut** : ✅ Optimisé
+                - **Statut** :  Optimisé
                 - **Taux présence** : 87%
                 - **Répartition** : Équilibrée
                 - **Suggestion** : Maintenir niveau actuel
@@ -84,7 +84,7 @@ def show_dashboard():
             # Optimisation 2 - Lits
             st.warning("**Capacité Lits**")
             st.markdown("""
-                - **Statut** : ⚠️ Tension en Réanimation
+                - **Statut** : Tension en Réanimation
                 - **Occupation Réa** : 92%
                 - **Occupation Médecine** : 78%
                 - **Suggestion** : Transférer 2-3 patients stables vers Médecine
